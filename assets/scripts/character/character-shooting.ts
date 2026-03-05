@@ -1,0 +1,72 @@
+import { _decorator, Component, Node, Prefab, Vec3, instantiate, toDegree, UITransform } from 'cc';
+import { CharacterConfig } from './character-config';
+import { CharacterBullet } from './character-bullet';
+import { BulletHitEffect } from './bullet-hit-effect';
+
+const { ccclass, property } = _decorator;
+
+const _dir = new Vec3();
+
+@ccclass('CharacterShooting')
+export class CharacterShooting extends Component {
+    @property(Node)
+    bossNode: Node = null!;
+
+    @property(Prefab)
+    bulletPrefab: Prefab = null!;
+
+    private _fireTimer = 0;
+    private _hitEffect: BulletHitEffect = null!;
+
+    start() {
+        const fxNode = new Node('HitEffectPool');
+        fxNode.setParent(this.node.parent);
+        this._hitEffect = fxNode.addComponent(BulletHitEffect);
+    }
+
+    update(dt: number) {
+        this._fireTimer -= dt;
+
+        if (!this.bossNode) return;
+
+        const selfPos = this.node.worldPosition;
+        const bossPos = this.bossNode.worldPosition;
+        Vec3.subtract(_dir, bossPos, selfPos);
+        const distance = _dir.length();
+
+        if (distance > CharacterConfig.shooting.attackRange) return;
+        if (this._fireTimer > 0) return;
+
+        this._fireTimer = CharacterConfig.shooting.fireRate;
+        this._fire(_dir, distance);
+    }
+
+    private _fire(dir: Vec3, distance: number) {
+        dir.x /= distance;
+        dir.y /= distance;
+        dir.z = 0;
+
+        const bullet = instantiate(this.bulletPrefab);
+        bullet.setParent(this.node.parent);
+        bullet.setWorldPosition(this.node.worldPosition);
+
+        const angle = toDegree(Math.atan2(dir.x, dir.y));
+        bullet.setRotationFromEuler(0, 0, -angle + 90);
+
+        bullet.getComponent(CharacterBullet)!.init(dir, distance, (hitDir) => {
+            this._onBulletHit(hitDir);
+        });
+    }
+
+    private _onBulletHit(hitDir: Vec3) {
+        const bossPos = this.bossNode.worldPosition;
+        const transform = this.bossNode.getComponent(UITransform);
+        const radius = transform ? Math.min(transform.contentSize.width, transform.contentSize.height) * 0.5 : 0;
+        const edgePos = new Vec3(
+            bossPos.x - hitDir.x * radius,
+            bossPos.y - hitDir.y * radius,
+            bossPos.z,
+        );
+        this._hitEffect.spawn(edgePos);
+    }
+}
