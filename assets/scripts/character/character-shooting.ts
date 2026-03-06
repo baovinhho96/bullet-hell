@@ -46,6 +46,10 @@ export class CharacterShooting extends Component {
         dir.y /= distance;
         dir.z = 0;
 
+        const transform = this.bossNode.getComponent(UITransform);
+        const radius = transform ? Math.min(transform.contentSize.width, transform.contentSize.height) * 0.5 : 0;
+        const hitDistance = distance - radius;
+
         const bullet = instantiate(this.bulletPrefab);
         bullet.setParent(this.node.parent);
         bullet.setWorldPosition(this.node.worldPosition);
@@ -53,7 +57,7 @@ export class CharacterShooting extends Component {
         const angle = toDegree(Math.atan2(dir.x, dir.y));
         bullet.setRotationFromEuler(0, 0, -angle + 90);
 
-        bullet.getComponent(CharacterBullet)!.init(dir, distance, (hitDir) => {
+        bullet.getComponent(CharacterBullet)!.init(dir, hitDistance, (hitDir) => {
             this._onBulletHit(hitDir);
         });
     }

@@ -1,0 +1,83 @@
+import { _decorator, Component, Node, Vec3, math, UITransform, view } from 'cc';
+
+const { ccclass, property } = _decorator;
+
+const _tempVec3 = new Vec3();
+
+@ccclass('CameraFollow')
+export class CameraFollow extends Component {
+    @property(Node)
+    target: Node = null!;
+
+    @property(Node)
+    playground: Node = null!;
+
+    @property({ tooltip: 'Smooth follow speed (higher = snappier)' })
+    smoothSpeed: number = 5;
+
+    private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+
+    start() {
+        this._computeBounds();
+        // Snap to target immediately on start
+        this._snapToTarget();
+    }
+
+    lateUpdate(dt: number) {
+        if (!this.target) return;
+
+        const targetPos = this.target.position;
+        const camPos = this.node.position;
+
+        // Lerp toward target
+        const t = 1 - Math.exp(-this.smoothSpeed * dt);
+        _tempVec3.set(
+            math.lerp(camPos.x, targetPos.x, t),
+            math.lerp(camPos.y, targetPos.y, t),
+            camPos.z,
+        );
+
+        // Clamp within playground bounds
+        _tempVec3.x = math.clamp(_tempVec3.x, this._bounds.minX, this._bounds.maxX);
+        _tempVec3.y = math.clamp(_tempVec3.y, this._bounds.minY, this._bounds.maxY);
+
+        this.node.setPosition(_tempVec3);
+    }
+
+    private _computeBounds() {
+        if (!this.playground) return;
+
+        const pgSize = this.playground.getComponent(UITransform)!.contentSize;
+        const visibleSize = view.getVisibleSize();
+
+        const halfViewW = visibleSize.width / 2;
+        const halfViewH = visibleSize.height / 2;
+        const halfPgW = pgSize.width / 2;
+        const halfPgH = pgSize.height / 2;
+
+        this._bounds.minX = -(halfPgW - halfViewW);
+        this._bounds.maxX = halfPgW - halfViewW;
+        this._bounds.minY = -(halfPgH - halfViewH);
+        this._bounds.maxY = halfPgH - halfViewH;
+
+        // If playground is smaller than view, center the camera
+        if (this._bounds.minX > this._bounds.maxX) {
+            this._bounds.minX = this._bounds.maxX = 0;
+        }
+        if (this._bounds.minY > this._bounds.maxY) {
+            this._bounds.minY = this._bounds.maxY = 0;
+        }
+    }
+
+    private _snapToTarget() {
+        if (!this.target) return;
+
+        const targetPos = this.target.position;
+        _tempVec3.set(
+            math.clamp(targetPos.x, this._bounds.minX, this._bounds.maxX),
+            math.clamp(targetPos.y, this._bounds.minY, this._bounds.maxY),
+            this.node.position.z,
+        );
+        this.node.setPosition(_tempVec3);
+    }
+}

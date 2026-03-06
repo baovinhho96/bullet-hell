@@ -6,13 +6,6 @@ export const CharacterConfig = {
     dashDuration: 0.15,
     dashCooldown: 0.8,
 
-    bounds: {
-        minX: -440,
-        maxX: 440,
-        minY: -280,
-        maxY: 280,
-    },
-
     shooting: {
         bulletSpeed: 800,
         fireRate: 0.2,
