@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, director, Button } from 'cc';
-import { CombatManager } from '../combat/combat-manager';
+import { GameState } from '../combat/game-state';
 
 const { ccclass, property } = _decorator;
 
@@ -17,8 +17,8 @@ export class VictoryPopup extends Component {
     }
 
     private _onBackToMenu() {
-        CombatManager.gameOver = false;
-        CombatManager.demoMode = true;
+        GameState.gameOver = false;
+        GameState.demoMode = true;
         director.loadScene(director.getScene()!.name);
     }
 }

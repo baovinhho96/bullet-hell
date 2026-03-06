@@ -1,6 +1,6 @@
 import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode, math, toDegree, UITransform } from 'cc';
 import { PlayerConfig } from './player-config';
-import { CombatManager } from '../combat/combat-manager';
+import { GameState } from '../combat/game-state';
 import { PlayerAi } from './player-ai';
 import { BossPhase, BossPhaseTracker } from '../boss/boss-phase';
 import { DashAfterimage } from '../utils/dash-afterimage';
@@ -51,7 +51,7 @@ export class PlayerMovement extends Component {
     }
 
     update(dt: number) {
-        if (CombatManager.gameOver) return;
+        if (GameState.gameOver) return;
 
         this._updateDashTimers(dt);
         this._updateMovement(dt);
@@ -98,7 +98,7 @@ export class PlayerMovement extends Component {
         const dir = this._moveDir;
         dir.set(0, 0, 0);
 
-        if (CombatManager.demoMode) {
+        if (GameState.demoMode) {
             this._ai.compute(dt, this.node.worldPosition, this.bossNode, this._bounds, this._phase);
             dir.set(this._ai.direction);
             if (this._ai.wantsDash) this._tryDash();

@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, director } from 'cc';
 import { CombatConfig } from './combat-config';
+import { GameState } from './game-state';
 import { Health } from './health';
 import { HealthBar } from './health-bar';
 import { BossPhaseTracker } from '../boss/boss-phase';
@@ -17,9 +18,6 @@ const { ccclass, property } = _decorator;
 
 @ccclass('CombatManager')
 export class CombatManager extends Component {
-    static gameOver = false;
-    static demoMode = true;
-
     @property(Node)
     bossNode: Node = null!;
 
@@ -42,9 +40,9 @@ export class CombatManager extends Component {
     startPopupNode: Node = null!;
 
     start() {
-        CombatManager.gameOver = false;
+        GameState.gameOver = false;
         const sound = SoundManager.instance;
-        if (CombatManager.demoMode) {
+        if (GameState.demoMode) {
             sound.setDemoVolume();
             this.startPopupNode.getComponent(StartPopup)?.show();
         } else {
@@ -75,22 +73,22 @@ export class CombatManager extends Component {
         });
 
         bossHealth.onDeath(() => {
-            if (CombatManager.demoMode) {
+            if (GameState.demoMode) {
                 this._restartDemo();
                 return;
             }
-            CombatManager.gameOver = true;
+            GameState.gameOver = true;
             this.bossNode.active = false;
             this._destroyAllBullets();
             this.victoryPopupNode.getComponent(VictoryPopup)?.show();
         });
 
         playerHealth.onDeath(() => {
-            if (CombatManager.demoMode) {
+            if (GameState.demoMode) {
                 this._restartDemo();
                 return;
             }
-            CombatManager.gameOver = true;
+            GameState.gameOver = true;
             this.playerNode.active = false;
             this._destroyAllBullets();
             this._showGameOver();

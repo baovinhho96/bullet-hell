@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Vec3, math, toDegree, UITransform } from 'cc';
 import { BossConfig } from './boss-config';
 import { BossPhase, BossPhaseTracker } from './boss-phase';
-import { CombatManager } from '../combat/combat-manager';
+import { GameState } from '../combat/game-state';
 import { DashAfterimage } from '../utils/dash-afterimage';
 import { ArenaBounds, computeArenaBounds } from '../utils/arena-bounds';
 
@@ -42,7 +42,7 @@ export class BossMovement extends Component {
     }
 
     update(dt: number) {
-        if (!this.playerNode || CombatManager.gameOver) return;
+        if (!this.playerNode || GameState.gameOver) return;
 
         if (this._startTimer > 0) {
             this._startTimer -= dt;

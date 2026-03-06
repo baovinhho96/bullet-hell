@@ -3,7 +3,7 @@ import { BossConfig } from './boss-config';
 import { BossBullet } from './boss-bullet';
 import { HitEffect } from '../utils/hit-effect';
 import { BossPhase, BossPhaseTracker } from './boss-phase';
-import { CombatManager } from '../combat/combat-manager';
+import { GameState } from '../combat/game-state';
 import { NodePool } from '../utils/object-pool';
 import { SoundManager } from '../sound/sound-manager';
 
@@ -40,7 +40,7 @@ export class BossShooting extends Component {
     }
 
     update(dt: number) {
-        if (!this.playerNode || CombatManager.gameOver) return;
+        if (!this.playerNode || GameState.gameOver) return;
 
         this._fireTimer -= dt;
         if (this._fireTimer > 0) return;
@@ -110,7 +110,7 @@ export class BossShooting extends Component {
 
         for (let i = 0; i < cfg.bulletCount; i++) {
             this.scheduleOnce(() => {
-                if (CombatManager.gameOver) return;
+                if (GameState.gameOver) return;
                 const angle = baseAngle + toRadian(cfg.degPerBullet * i);
                 const dir = new Vec3(Math.cos(angle), Math.sin(angle), 0);
                 this._spawnBullet(dir, cfg.speed);

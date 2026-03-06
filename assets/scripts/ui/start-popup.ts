@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Button, director } from 'cc';
-import { CombatManager } from '../combat/combat-manager';
+import { GameState } from '../combat/game-state';
 
 const { ccclass, property } = _decorator;
 
@@ -17,7 +17,7 @@ export class StartPopup extends Component {
     }
 
     private _onPlay() {
-        CombatManager.demoMode = false;
+        GameState.demoMode = false;
         director.loadScene(director.getScene()!.name);
     }
 }

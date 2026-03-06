@@ -4,7 +4,7 @@ import { PlayerBullet } from './player-bullet';
 import { HitEffect } from '../utils/hit-effect';
 import { CombatConfig } from '../combat/combat-config';
 import { Health } from '../combat/health';
-import { CombatManager } from '../combat/combat-manager';
+import { GameState } from '../combat/game-state';
 import { NodePool } from '../utils/object-pool';
 import { SoundManager } from '../sound/sound-manager';
 
@@ -35,7 +35,7 @@ export class PlayerShooting extends Component {
     update(dt: number) {
         this._fireTimer -= dt;
 
-        if (!this.bossNode || CombatManager.gameOver) return;
+        if (!this.bossNode || GameState.gameOver) return;
 
         const selfPos = this.node.worldPosition;
         const bossPos = this.bossNode.worldPosition;
