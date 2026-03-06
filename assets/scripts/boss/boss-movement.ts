@@ -1,6 +1,8 @@
 import { _decorator, Component, Node, Vec3, math, toDegree, UITransform } from 'cc';
 import { BossConfig } from './boss-config';
 import { BossDashAfterimage } from './boss-dash-afterimage';
+import { BossPhase, BossPhaseTracker } from './boss-phase';
+import { CombatManager } from '../combat/combat-manager';
 
 const { ccclass, property } = _decorator;
 
@@ -23,6 +25,12 @@ export class BossMovement extends Component {
     private _dashDir = new Vec3();
     private _casualDashTimer = 0;
     private _afterimage: BossDashAfterimage = null!;
+    private _phase = BossPhase.Phase1;
+
+    setPhaseTracker(tracker: BossPhaseTracker) {
+        this._phase = tracker.phase;
+        tracker.onChange((phase) => { this._phase = phase; });
+    }
 
     start() {
         this._startTimer = BossConfig.startDelay;
@@ -32,7 +40,7 @@ export class BossMovement extends Component {
     }
 
     update(dt: number) {
-        if (!this.playerNode) return;
+        if (!this.playerNode || CombatManager.gameOver) return;
 
         if (this._startTimer > 0) {
             this._startTimer -= dt;
@@ -50,7 +58,7 @@ export class BossMovement extends Component {
     }
 
     private _resetCasualDashTimer() {
-        const { casualDashMin, casualDashMax } = BossConfig;
+        const { casualDashMin, casualDashMax } = BossConfig.phases[this._phase];
         this._casualDashTimer = casualDashMin + Math.random() * (casualDashMax - casualDashMin);
     }
 
@@ -104,7 +112,7 @@ export class BossMovement extends Component {
         const dy = targetPos.y - selfPos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
-        if (dist > BossConfig.chaseDashThreshold) {
+        if (dist > BossConfig.phases[this._phase].chaseDashThreshold) {
             this._dashDir.set(dx / dist, dy / dist, 0);
             this._isDashing = true;
             this._dashTimer = BossConfig.dashDuration;
@@ -117,7 +125,7 @@ export class BossMovement extends Component {
             this._dashTimer -= dt;
             if (this._dashTimer <= 0) {
                 this._isDashing = false;
-                this._dashCooldownTimer = BossConfig.dashCooldown;
+                this._dashCooldownTimer = BossConfig.phases[this._phase].dashCooldown;
                 this._resetCasualDashTimer();
             }
         }

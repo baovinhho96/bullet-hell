@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode, math, toDegree, UITransform } from 'cc';
 import { PlayerConfig } from './player-config';
 import { DashAfterimage } from './dash-afterimage';
+import { CombatManager } from '../combat/combat-manager';
 
 const { ccclass, property } = _decorator;
 
@@ -38,6 +39,8 @@ export class PlayerMovement extends Component {
     }
 
     update(dt: number) {
+        if (CombatManager.gameOver) return;
+
         this._updateDashTimers(dt);
         this._updateMovement(dt);
         this._clampPosition();

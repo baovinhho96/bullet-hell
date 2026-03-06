@@ -1,4 +1,5 @@
 import { Color } from 'cc';
+import { BossPhase } from './boss-phase';
 
 export const BossConfig = {
     moveSpeed: 200,
@@ -7,13 +8,6 @@ export const BossConfig = {
 
     dashSpeed: 700,
     dashDuration: 0.3,
-    dashCooldown: 1.5,
-
-    /** Random interval range (seconds) between casual dashes */
-    casualDashMin: 2,
-    casualDashMax: 4,
-    /** Distance beyond keepDistance that triggers a chase-dash */
-    chaseDashThreshold: 600,
 
     afterimage: {
         spawnInterval: 0.03,
@@ -22,14 +16,55 @@ export const BossConfig = {
         color: new Color(255, 80, 80, 255),
     },
 
-    shooting1: {
-        /** Number of bullets per burst */
-        bulletCount: 6,
-        /** Half-circle arc spread in degrees */
-        arcDegrees: 160,
-        /** Bullet travel speed (px/s) — slower than player's 300 moveSpeed so they can dodge */
-        bulletSpeed: 220,
-        /** Time between bursts (seconds) */
-        fireCooldown: 3,
+    hitEffect: {
+        scaleTo: 1.5,
+        duration: 0.25,
+        color: new Color(255, 80, 80, 200),
+    },
+
+    shooting: {
+        normal: {
+            bulletCount: 6,
+            arcDegrees: 160,
+            speed: 220,
+        },
+        crazyFan: {
+            bulletCount: 18,
+            arcDegrees: 300,
+            speed: 200,
+        },
+        crazySpiral: {
+            bulletCount: 18,
+            spiralDuration: 0.6,
+            degPerBullet: 20,
+            speed: 180,
+        },
+    },
+
+    phases: {
+        [BossPhase.Phase1]: {
+            dashCooldown: 1.5,
+            casualDashMin: 2,
+            casualDashMax: 4,
+            chaseDashThreshold: 600,
+            fireCooldown: 3,
+            patterns: ['normal'] as const,
+        },
+        [BossPhase.Phase2]: {
+            dashCooldown: 2.0,
+            casualDashMin: 2.5,
+            casualDashMax: 5,
+            chaseDashThreshold: 600,
+            fireCooldown: 2.5,
+            patterns: ['normal', 'crazyFan'] as const,
+        },
+        [BossPhase.Phase3]: {
+            dashCooldown: 0.8,
+            casualDashMin: 0.8,
+            casualDashMax: 1.5,
+            chaseDashThreshold: 400,
+            fireCooldown: 1.8,
+            patterns: ['crazyFan', 'crazySpiral'] as const,
+        },
     },
 };

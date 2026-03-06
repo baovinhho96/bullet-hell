@@ -4,6 +4,7 @@ import { PlayerBullet } from './player-bullet';
 import { BulletHitEffect } from './bullet-hit-effect';
 import { CombatConfig } from '../combat/combat-config';
 import { Health } from '../combat/health';
+import { CombatManager } from '../combat/combat-manager';
 
 const { ccclass, property } = _decorator;
 
@@ -29,7 +30,7 @@ export class PlayerShooting extends Component {
     update(dt: number) {
         this._fireTimer -= dt;
 
-        if (!this.bossNode) return;
+        if (!this.bossNode || CombatManager.gameOver) return;
 
         const selfPos = this.node.worldPosition;
         const bossPos = this.bossNode.worldPosition;

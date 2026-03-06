@@ -1,5 +1,4 @@
 import { _decorator, Component, Node, Vec3, UITransform } from 'cc';
-import { BossConfig } from './boss-config';
 import { CombatConfig } from '../combat/combat-config';
 import { Health } from '../combat/health';
 
@@ -10,14 +9,18 @@ const _tempVec3 = new Vec3();
 @ccclass('BossBullet')
 export class BossBullet extends Component {
     private _direction = new Vec3();
+    private _speed = 220;
     private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     private _playerNode: Node | null = null;
     private _hitRadius = 20;
+    private _onHit: ((worldPos: Vec3) => void) | null = null;
 
-    init(direction: Vec3, wallsNode: Node, playerNode?: Node) {
+    init(direction: Vec3, wallsNode: Node, playerNode?: Node, onHit?: (worldPos: Vec3) => void, speed?: number) {
         Vec3.normalize(this._direction, direction);
+        if (speed !== undefined) this._speed = speed;
         this._computeBounds(wallsNode);
         this._playerNode = playerNode ?? null;
+        this._onHit = onHit ?? null;
         if (playerNode) {
             const transform = playerNode.getComponent(UITransform);
             if (transform) {
@@ -27,7 +30,7 @@ export class BossBullet extends Component {
     }
 
     update(dt: number) {
-        const step = BossConfig.shooting1.bulletSpeed * dt;
+        const step = this._speed * dt;
 
         const pos = this.node.position;
         _tempVec3.set(
@@ -49,6 +52,7 @@ export class BossBullet extends Component {
                 const health = this._playerNode.getComponent(Health);
                 if (health && !health.isDead) {
                     health.takeDamage(CombatConfig.damage.bossBullet);
+                    this._onHit?.(this.node.worldPosition);
                 }
                 this.node.destroy();
                 return;
