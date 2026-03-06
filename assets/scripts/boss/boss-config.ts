@@ -31,7 +31,5 @@ export const BossConfig = {
         bulletSpeed: 220,
         /** Time between bursts (seconds) */
         fireCooldown: 3,
-        /** Max distance before bullet is destroyed */
-        bulletMaxDistance: 900,
     },
 };

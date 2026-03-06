@@ -1,24 +1,22 @@
-import { _decorator, Component, Vec3 } from 'cc';
+import { _decorator, Component, Node, Vec3, UITransform } from 'cc';
 import { BossConfig } from './boss-config';
 
-const { ccclass } = _decorator;
+const { ccclass, property } = _decorator;
 
 const _tempVec3 = new Vec3();
 
 @ccclass('BossBullet')
 export class BossBullet extends Component {
     private _direction = new Vec3();
-    private _traveled = 0;
+    private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 
-    init(direction: Vec3) {
+    init(direction: Vec3, wallsNode: Node) {
         Vec3.normalize(this._direction, direction);
-        this._traveled = 0;
+        this._computeBounds(wallsNode);
     }
 
     update(dt: number) {
-        const speed = BossConfig.shooting1.bulletSpeed;
-        const step = speed * dt;
-        this._traveled += step;
+        const step = BossConfig.shooting1.bulletSpeed * dt;
 
         const pos = this.node.position;
         _tempVec3.set(
@@ -28,8 +26,21 @@ export class BossBullet extends Component {
         );
         this.node.setPosition(_tempVec3);
 
-        if (this._traveled >= BossConfig.shooting1.bulletMaxDistance) {
+        const { minX, maxX, minY, maxY } = this._bounds;
+        if (_tempVec3.x < minX || _tempVec3.x > maxX || _tempVec3.y < minY || _tempVec3.y > maxY) {
             this.node.destroy();
         }
+    }
+
+    private _computeBounds(wallsNode: Node) {
+        const left = wallsNode.getChildByName('Left')!;
+        const right = wallsNode.getChildByName('Right')!;
+        const top = wallsNode.getChildByName('Top')!;
+        const down = wallsNode.getChildByName('Down')!;
+
+        this._bounds.minX = left.position.x + left.getComponent(UITransform)!.contentSize.width / 2;
+        this._bounds.maxX = right.position.x - right.getComponent(UITransform)!.contentSize.width / 2;
+        this._bounds.minY = down.position.y + down.getComponent(UITransform)!.contentSize.height / 2;
+        this._bounds.maxY = top.position.y - top.getComponent(UITransform)!.contentSize.height / 2;
     }
 }

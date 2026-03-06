@@ -11,6 +11,9 @@ export class BossShooting extends Component {
     @property(Node)
     characterNode: Node = null!;
 
+    @property(Node)
+    wallsNode: Node = null!;
+
     @property(Prefab)
     bullet1Prefab: Prefab = null!;
 
@@ -59,6 +62,6 @@ export class BossShooting extends Component {
         bullet.setParent(this.node.parent);
         bullet.setWorldPosition(this.node.worldPosition);
 
-        bullet.getComponent(BossBullet)!.init(direction);
+        bullet.getComponent(BossBullet)!.init(direction, this.wallsNode);
     }
 }

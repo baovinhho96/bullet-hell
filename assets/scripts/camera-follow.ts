@@ -15,12 +15,18 @@ export class CameraFollow extends Component {
     @property({ tooltip: 'Smooth follow speed (higher = snappier)' })
     smoothSpeed: number = 5;
 
+    @property({ tooltip: 'Minimum distance (px) character must remain inside the viewport edge' })
+    edgePadding: number = 100;
+
     private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    private _halfViewW = 0;
+    private _halfViewH = 0;
 
     start() {
         this._computeBounds();
-        // Snap to target immediately on start
-        this._snapToTarget();
+        const visibleSize = view.getVisibleSize();
+        this._halfViewW = visibleSize.width / 2;
+        this._halfViewH = visibleSize.height / 2;
     }
 
     lateUpdate(dt: number) {
@@ -28,12 +34,30 @@ export class CameraFollow extends Component {
 
         const targetPos = this.target.position;
         const camPos = this.node.position;
+        const pad = this.edgePadding;
 
-        // Lerp toward target
+        // Character position relative to camera
+        const relX = targetPos.x - camPos.x;
+        const relY = targetPos.y - camPos.y;
+
+        // Inner bounds the character must stay within
+        const limitX = this._halfViewW - pad;
+        const limitY = this._halfViewH - pad;
+
+        // Only move camera if character exceeds the inner bounds
+        let pushX = 0;
+        let pushY = 0;
+        if (relX > limitX) pushX = relX - limitX;
+        else if (relX < -limitX) pushX = relX + limitX;
+        if (relY > limitY) pushY = relY - limitY;
+        else if (relY < -limitY) pushY = relY + limitY;
+
+        if (pushX === 0 && pushY === 0) return;
+
         const t = 1 - Math.exp(-this.smoothSpeed * dt);
         _tempVec3.set(
-            math.lerp(camPos.x, targetPos.x, t),
-            math.lerp(camPos.y, targetPos.y, t),
+            camPos.x + pushX * t,
+            camPos.y + pushY * t,
             camPos.z,
         );
 
