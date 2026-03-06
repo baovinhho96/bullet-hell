@@ -10,6 +10,7 @@ import { BossBullet } from '../boss/boss-bullet';
 import { PlayerBullet } from '../player/player-bullet';
 import { GameOverPopup } from '../ui/game-over-popup';
 import { VictoryPopup } from '../ui/victory-popup';
+import { StartPopup } from '../ui/start-popup';
 
 const { ccclass, property } = _decorator;
 
@@ -35,8 +36,12 @@ export class CombatManager extends Component {
     @property(Node)
     victoryPopupNode: Node = null!;
 
+    @property(Node)
+    startPopupNode: Node = null!;
+
     start() {
         CombatManager.gameOver = false;
+        this.startPopupNode.getComponent(StartPopup)?.show();
         // Add Health to boss
         const bossHealth = this.bossNode.addComponent(Health);
         bossHealth.init(CombatConfig.boss.maxHp, CombatConfig.boss.iFrameDuration);
