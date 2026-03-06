@@ -18,6 +18,7 @@ export class VictoryPopup extends Component {
 
     private _onPlayAgain() {
         CombatManager.gameOver = false;
+        CombatManager.demoMode = true;
         director.loadScene(director.getScene()!.name);
     }
 }

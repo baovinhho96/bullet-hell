@@ -2,6 +2,8 @@ import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode
 import { PlayerConfig } from './player-config';
 import { DashAfterimage } from './dash-afterimage';
 import { CombatManager } from '../combat/combat-manager';
+import { PlayerAi } from './player-ai';
+import { BossPhase, BossPhaseTracker } from '../boss/boss-phase';
 
 const { ccclass, property } = _decorator;
 
@@ -22,10 +24,18 @@ export class PlayerMovement extends Component {
     private _dashCooldownTimer = 0;
     private _afterimage: DashAfterimage = null!;
     private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    private _ai = new PlayerAi();
+    private _phase = BossPhase.Phase1;
 
     start() {
         this._afterimage = this.node.addComponent(DashAfterimage);
         this._computeBounds();
+        PlayerAi.setMoveSpeed(PlayerConfig.moveSpeed);
+    }
+
+    setPhaseTracker(tracker: BossPhaseTracker) {
+        this._phase = tracker.phase;
+        tracker.onChange((phase) => { this._phase = phase; });
     }
 
     onEnable() {
@@ -86,10 +96,16 @@ export class PlayerMovement extends Component {
         const dir = this._moveDir;
         dir.set(0, 0, 0);
 
-        if (this._keys.has(KeyCode.KEY_W) || this._keys.has(KeyCode.ARROW_UP)) dir.y += 1;
-        if (this._keys.has(KeyCode.KEY_S) || this._keys.has(KeyCode.ARROW_DOWN)) dir.y -= 1;
-        if (this._keys.has(KeyCode.KEY_A) || this._keys.has(KeyCode.ARROW_LEFT)) dir.x -= 1;
-        if (this._keys.has(KeyCode.KEY_D) || this._keys.has(KeyCode.ARROW_RIGHT)) dir.x += 1;
+        if (CombatManager.demoMode) {
+            this._ai.compute(dt, this.node.worldPosition, this.bossNode, this._bounds, this._phase);
+            dir.set(this._ai.direction);
+            if (this._ai.wantsDash) this._tryDash();
+        } else {
+            if (this._keys.has(KeyCode.KEY_W) || this._keys.has(KeyCode.ARROW_UP)) dir.y += 1;
+            if (this._keys.has(KeyCode.KEY_S) || this._keys.has(KeyCode.ARROW_DOWN)) dir.y -= 1;
+            if (this._keys.has(KeyCode.KEY_A) || this._keys.has(KeyCode.ARROW_LEFT)) dir.x -= 1;
+            if (this._keys.has(KeyCode.KEY_D) || this._keys.has(KeyCode.ARROW_RIGHT)) dir.x += 1;
+        }
 
         if (dir.lengthSqr() === 0) return;
 

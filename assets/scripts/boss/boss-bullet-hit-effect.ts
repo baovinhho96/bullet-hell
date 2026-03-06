@@ -1,20 +1,17 @@
 import { _decorator, Component, Node, UIOpacity, Vec3, UITransform, Graphics, tween, Color } from 'cc';
 import { BossConfig } from './boss-config';
+import { ObjectPool } from '../utils/object-pool';
 
 const { ccclass } = _decorator;
 
 @ccclass('BossBulletHitEffect')
 export class BossBulletHitEffect extends Component {
-    private _pool: Node[] = [];
+    private _pool = new ObjectPool<Node>(() => this._createNode());
 
     spawn(worldPos: Vec3) {
         const cfg = BossConfig.hitEffect;
 
-        let fx = this._pool.pop();
-        if (!fx) {
-            fx = this._createNode();
-        }
-
+        const fx = this._pool.get();
         fx.active = true;
         fx.setWorldPosition(worldPos);
         fx.setScale(0.5, 0.5, 1);
@@ -25,8 +22,8 @@ export class BossBulletHitEffect extends Component {
         tween(fx)
             .to(cfg.duration, { scale: new Vec3(cfg.scaleTo, cfg.scaleTo, 1) })
             .call(() => {
-                fx!.active = false;
-                this._pool.push(fx!);
+                fx.active = false;
+                this._pool.put(fx);
             })
             .start();
 

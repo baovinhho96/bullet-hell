@@ -1,9 +1,10 @@
-import { _decorator, Component, Node, Prefab, Vec3, instantiate, toRadian } from 'cc';
+import { _decorator, Component, Node, Prefab, Vec3, toRadian } from 'cc';
 import { BossConfig } from './boss-config';
 import { BossBullet } from './boss-bullet';
 import { BossBulletHitEffect } from './boss-bullet-hit-effect';
 import { BossPhase, BossPhaseTracker } from './boss-phase';
 import { CombatManager } from '../combat/combat-manager';
+import { NodePool } from '../utils/object-pool';
 
 const { ccclass, property } = _decorator;
 
@@ -23,6 +24,7 @@ export class BossShooting extends Component {
     private _fireTimer = 0;
     private _hitEffect!: BossBulletHitEffect;
     private _phase = BossPhase.Phase1;
+    private _pool!: NodePool;
 
     setPhaseTracker(tracker: BossPhaseTracker) {
         this._phase = tracker.phase;
@@ -30,6 +32,7 @@ export class BossShooting extends Component {
     }
 
     start() {
+        this._pool = new NodePool(this.bullet1Prefab);
         this._fireTimer = BossConfig.startDelay;
         this._hitEffect = this.node.addComponent(BossBulletHitEffect);
     }
@@ -112,12 +115,12 @@ export class BossShooting extends Component {
     }
 
     private _spawnBullet(direction: Vec3, speed: number) {
-        const bullet = instantiate(this.bullet1Prefab);
+        const bullet = this._pool.get();
         bullet.setParent(this.node.parent);
         bullet.setWorldPosition(this.node.worldPosition);
 
         bullet.getComponent(BossBullet)!.init(direction, this.wallsNode, this.playerNode, (pos) => {
             this._hitEffect.spawn(pos);
-        }, speed);
+        }, speed, this._pool.recycle);
     }
 }

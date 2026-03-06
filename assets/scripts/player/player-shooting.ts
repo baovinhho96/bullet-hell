@@ -1,10 +1,11 @@
-import { _decorator, Component, Node, Prefab, Vec3, instantiate, toDegree, UITransform } from 'cc';
+import { _decorator, Component, Node, Prefab, Vec3, toDegree, UITransform } from 'cc';
 import { PlayerConfig } from './player-config';
 import { PlayerBullet } from './player-bullet';
 import { BulletHitEffect } from './bullet-hit-effect';
 import { CombatConfig } from '../combat/combat-config';
 import { Health } from '../combat/health';
 import { CombatManager } from '../combat/combat-manager';
+import { NodePool } from '../utils/object-pool';
 
 const { ccclass, property } = _decorator;
 
@@ -20,8 +21,10 @@ export class PlayerShooting extends Component {
 
     private _fireTimer = 0;
     private _hitEffect: BulletHitEffect = null!;
+    private _pool!: NodePool;
 
     start() {
+        this._pool = new NodePool(this.bulletPrefab);
         const fxNode = new Node('HitEffectPool');
         fxNode.setParent(this.node.parent);
         this._hitEffect = fxNode.addComponent(BulletHitEffect);
@@ -53,7 +56,7 @@ export class PlayerShooting extends Component {
         const radius = transform ? Math.min(transform.contentSize.width, transform.contentSize.height) * 0.5 : 0;
         const hitDistance = distance - radius;
 
-        const bullet = instantiate(this.bulletPrefab);
+        const bullet = this._pool.get();
         bullet.setParent(this.node.parent);
         bullet.setWorldPosition(this.node.worldPosition);
 
@@ -62,7 +65,7 @@ export class PlayerShooting extends Component {
 
         bullet.getComponent(PlayerBullet)!.init(dir, hitDistance, (hitDir) => {
             this._onBulletHit(hitDir);
-        });
+        }, this._pool.recycle);
     }
 
     private _onBulletHit(hitDir: Vec3) {

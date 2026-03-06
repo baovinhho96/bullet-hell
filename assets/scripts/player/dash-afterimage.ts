@@ -1,5 +1,6 @@
 import { _decorator, Component, Node, Sprite, UIOpacity, UITransform, Color, Vec3 } from 'cc';
 import { PlayerConfig } from './player-config';
+import { ObjectPool } from '../utils/object-pool';
 
 const { ccclass } = _decorator;
 
@@ -14,7 +15,7 @@ interface Ghost {
 
 @ccclass('DashAfterimage')
 export class DashAfterimage extends Component {
-    private _pool: Ghost[] = [];
+    private _pool = new ObjectPool<Ghost>(() => this._createGhost());
     private _active: Ghost[] = [];
     private _spawnTimer = 0;
     private _playerSprite: Sprite = null!;
@@ -38,7 +39,7 @@ export class DashAfterimage extends Component {
     }
 
     private _spawnGhost() {
-        const ghost = this._getGhost();
+        const ghost = this._pool.get();
         const { node } = ghost;
 
         node.setWorldPosition(this.node.worldPosition);
@@ -63,7 +64,7 @@ export class DashAfterimage extends Component {
 
             if (ghost.timer <= 0) {
                 ghost.node.active = false;
-                this._pool.push(ghost);
+                this._pool.put(ghost);
                 this._active.splice(i, 1);
             } else {
                 const ratio = ghost.timer / fadeDuration;
@@ -72,11 +73,7 @@ export class DashAfterimage extends Component {
         }
     }
 
-    private _getGhost(): Ghost {
-        if (this._pool.length > 0) {
-            return this._pool.pop()!;
-        }
-
+    private _createGhost(): Ghost {
         const node = new Node('Afterimage');
         this.node.parent!.addChild(node);
         node.setSiblingIndex(this.node.getSiblingIndex());

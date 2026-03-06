@@ -8,19 +8,30 @@ const _tempVec3 = new Vec3();
 
 @ccclass('BossBullet')
 export class BossBullet extends Component {
+    private static _pool = new Set<BossBullet>();
+    static get activeBullets(): ReadonlySet<BossBullet> { return BossBullet._pool; }
+
     private _direction = new Vec3();
     private _speed = 220;
     private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     private _playerNode: Node | null = null;
     private _hitRadius = 20;
     private _onHit: ((worldPos: Vec3) => void) | null = null;
+    private _onRecycle: ((node: Node) => void) | null = null;
 
-    init(direction: Vec3, wallsNode: Node, playerNode?: Node, onHit?: (worldPos: Vec3) => void, speed?: number) {
+    get bulletDirection(): Readonly<Vec3> { return this._direction; }
+    get bulletSpeed(): number { return this._speed; }
+
+    onEnable() { BossBullet._pool.add(this); }
+    onDestroy() { BossBullet._pool.delete(this); }
+
+    init(direction: Vec3, wallsNode: Node, playerNode?: Node, onHit?: (worldPos: Vec3) => void, speed?: number, onRecycle?: (node: Node) => void) {
         Vec3.normalize(this._direction, direction);
         if (speed !== undefined) this._speed = speed;
         this._computeBounds(wallsNode);
         this._playerNode = playerNode ?? null;
         this._onHit = onHit ?? null;
+        this._onRecycle = onRecycle ?? null;
         if (playerNode) {
             const transform = playerNode.getComponent(UITransform);
             if (transform) {
@@ -54,14 +65,22 @@ export class BossBullet extends Component {
                     health.takeDamage(CombatConfig.damage.bossBullet);
                     this._onHit?.(this.node.worldPosition);
                 }
-                this.node.destroy();
+                if (this._onRecycle) {
+                    this._onRecycle(this.node);
+                } else {
+                    this.node.destroy();
+                }
                 return;
             }
         }
 
         const { minX, maxX, minY, maxY } = this._bounds;
         if (_tempVec3.x < minX || _tempVec3.x > maxX || _tempVec3.y < minY || _tempVec3.y > maxY) {
-            this.node.destroy();
+            if (this._onRecycle) {
+                this._onRecycle(this.node);
+            } else {
+                this.node.destroy();
+            }
         }
     }
 

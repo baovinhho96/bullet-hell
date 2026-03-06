@@ -1,4 +1,4 @@
-import { _decorator, Component, Vec3 } from 'cc';
+import { _decorator, Component, Node, Vec3 } from 'cc';
 import { PlayerConfig } from './player-config';
 
 const { ccclass } = _decorator;
@@ -11,12 +11,14 @@ export class PlayerBullet extends Component {
     private _targetDistance = 0;
     private _traveled = 0;
     private _onHit: ((dir: Vec3) => void) | null = null;
+    private _onRecycle: ((node: Node) => void) | null = null;
 
-    init(direction: Vec3, targetDistance: number, onHit: (dir: Vec3) => void) {
+    init(direction: Vec3, targetDistance: number, onHit: (dir: Vec3) => void, onRecycle?: (node: Node) => void) {
         Vec3.normalize(this._direction, direction);
         this._targetDistance = targetDistance;
         this._traveled = 0;
         this._onHit = onHit;
+        this._onRecycle = onRecycle ?? null;
     }
 
     update(dt: number) {
@@ -34,7 +36,11 @@ export class PlayerBullet extends Component {
 
         if (this._traveled >= this._targetDistance) {
             this._onHit?.(this._direction);
-            this.node.destroy();
+            if (this._onRecycle) {
+                this._onRecycle(this.node);
+            } else {
+                this.node.destroy();
+            }
         }
     }
 }

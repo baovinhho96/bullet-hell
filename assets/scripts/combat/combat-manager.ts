@@ -8,6 +8,7 @@ import { BossMovement } from '../boss/boss-movement';
 import { BossShooting } from '../boss/boss-shooting';
 import { BossBullet } from '../boss/boss-bullet';
 import { PlayerBullet } from '../player/player-bullet';
+import { PlayerMovement } from '../player/player-movement';
 import { GameOverPopup } from '../ui/game-over-popup';
 import { VictoryPopup } from '../ui/victory-popup';
 import { StartPopup } from '../ui/start-popup';
@@ -17,6 +18,7 @@ const { ccclass, property } = _decorator;
 @ccclass('CombatManager')
 export class CombatManager extends Component {
     static gameOver = false;
+    static demoMode = true;
 
     @property(Node)
     bossNode: Node = null!;
@@ -41,7 +43,9 @@ export class CombatManager extends Component {
 
     start() {
         CombatManager.gameOver = false;
-        this.startPopupNode.getComponent(StartPopup)?.show();
+        if (CombatManager.demoMode) {
+            this.startPopupNode.getComponent(StartPopup)?.show();
+        }
         // Add Health to boss
         const bossHealth = this.bossNode.addComponent(Health);
         bossHealth.init(CombatConfig.boss.maxHp, CombatConfig.boss.iFrameDuration);
@@ -58,6 +62,7 @@ export class CombatManager extends Component {
         const phaseTracker = new BossPhaseTracker();
         this.bossNode.getComponent(BossMovement)?.setPhaseTracker(phaseTracker);
         this.bossNode.getComponent(BossShooting)?.setPhaseTracker(phaseTracker);
+        this.playerNode.getComponent(PlayerMovement)?.setPhaseTracker(phaseTracker);
 
         // Wire boss damage → health bar update + phase tracking
         bossHealth.onDamage((current, max) => {
@@ -70,16 +75,24 @@ export class CombatManager extends Component {
             playerHealthBar.updateHealth(current, max);
         });
 
-        // Boss death → Victory
+        // Boss death → Victory or restart demo
         bossHealth.onDeath(() => {
+            if (CombatManager.demoMode) {
+                this._restartDemo();
+                return;
+            }
             CombatManager.gameOver = true;
             this.bossNode.active = false;
             this._destroyAllBullets();
             this.victoryPopupNode.getComponent(VictoryPopup)?.show();
         });
 
-        // Player death
+        // Player death → Game over or restart demo
         playerHealth.onDeath(() => {
+            if (CombatManager.demoMode) {
+                this._restartDemo();
+                return;
+            }
             CombatManager.gameOver = true;
             this.playerNode.active = false;
             this._destroyAllBullets();
@@ -91,11 +104,16 @@ export class CombatManager extends Component {
         this.gameOverPopupNode.getComponent(GameOverPopup)?.show();
     }
 
+    private _restartDemo() {
+        this._destroyAllBullets();
+        director.loadScene(director.getScene()!.name);
+    }
+
     private _destroyAllBullets() {
-        const scene = director.getScene()!;
-        for (const comp of scene.getComponentsInChildren(BossBullet)) {
+        for (const comp of BossBullet.activeBullets) {
             comp.node.destroy();
         }
+        const scene = director.getScene()!;
         for (const comp of scene.getComponentsInChildren(PlayerBullet)) {
             comp.node.destroy();
         }
