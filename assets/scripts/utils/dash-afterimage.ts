@@ -1,8 +1,14 @@
 import { _decorator, Component, Node, Sprite, UIOpacity, UITransform, Color } from 'cc';
-import { BossConfig } from './boss-config';
-import { ObjectPool } from '../utils/object-pool';
+import { ObjectPool } from './object-pool';
 
 const { ccclass } = _decorator;
+
+interface AfterimageConfig {
+    spawnInterval: number;
+    fadeDuration: number;
+    startOpacity: number;
+    color: Color;
+}
 
 interface Ghost {
     node: Node;
@@ -11,15 +17,20 @@ interface Ghost {
     timer: number;
 }
 
-@ccclass('BossDashAfterimage')
-export class BossDashAfterimage extends Component {
+@ccclass('DashAfterimage')
+export class DashAfterimage extends Component {
     private _pool = new ObjectPool<Ghost>(() => this._createGhost());
     private _active: Ghost[] = [];
     private _spawnTimer = 0;
-    private _bossSprite: Sprite = null!;
+    private _sourceSprite: Sprite = null!;
+    private _config: AfterimageConfig = null!;
+
+    init(config: AfterimageConfig) {
+        this._config = config;
+    }
 
     start() {
-        this._bossSprite = this.node.getComponent(Sprite)!;
+        this._sourceSprite = this.node.getComponent(Sprite)!;
     }
 
     onDashFrame(isDashing: boolean, dt: number) {
@@ -27,7 +38,7 @@ export class BossDashAfterimage extends Component {
             this._spawnTimer -= dt;
             if (this._spawnTimer <= 0) {
                 this._spawnGhost();
-                this._spawnTimer = BossConfig.afterimage.spawnInterval;
+                this._spawnTimer = this._config.spawnInterval;
             }
         } else {
             this._spawnTimer = 0;
@@ -44,17 +55,17 @@ export class BossDashAfterimage extends Component {
         node.setWorldRotation(this.node.worldRotation);
         node.setWorldScale(this.node.worldScale);
 
-        ghost.sprite.spriteFrame = this._bossSprite.spriteFrame;
-        ghost.sprite.color = BossConfig.afterimage.color;
-        ghost.opacity.opacity = BossConfig.afterimage.startOpacity;
-        ghost.timer = BossConfig.afterimage.fadeDuration;
+        ghost.sprite.spriteFrame = this._sourceSprite.spriteFrame;
+        ghost.sprite.color = this._config.color;
+        ghost.opacity.opacity = this._config.startOpacity;
+        ghost.timer = this._config.fadeDuration;
 
         node.active = true;
         this._active.push(ghost);
     }
 
     private _updateGhosts(dt: number) {
-        const { fadeDuration, startOpacity } = BossConfig.afterimage;
+        const { fadeDuration, startOpacity } = this._config;
 
         for (let i = this._active.length - 1; i >= 0; i--) {
             const ghost = this._active[i];
@@ -72,7 +83,7 @@ export class BossDashAfterimage extends Component {
     }
 
     private _createGhost(): Ghost {
-        const node = new Node('BossAfterimage');
+        const node = new Node('Afterimage');
         this.node.parent!.addChild(node);
         node.setSiblingIndex(this.node.getSiblingIndex());
 

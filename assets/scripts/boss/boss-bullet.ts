@@ -1,6 +1,7 @@
 import { _decorator, Component, Node, Vec3, UITransform } from 'cc';
 import { CombatConfig } from '../combat/combat-config';
 import { Health } from '../combat/health';
+import { ArenaBounds, computeArenaBounds } from '../utils/arena-bounds';
 
 const { ccclass, property } = _decorator;
 
@@ -13,7 +14,7 @@ export class BossBullet extends Component {
 
     private _direction = new Vec3();
     private _speed = 220;
-    private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    private _bounds: ArenaBounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     private _playerNode: Node | null = null;
     private _hitRadius = 20;
     private _onHit: ((worldPos: Vec3) => void) | null = null;
@@ -28,7 +29,7 @@ export class BossBullet extends Component {
     init(direction: Vec3, wallsNode: Node, playerNode?: Node, onHit?: (worldPos: Vec3) => void, speed?: number, onRecycle?: (node: Node) => void) {
         Vec3.normalize(this._direction, direction);
         if (speed !== undefined) this._speed = speed;
-        this._computeBounds(wallsNode);
+        this._bounds = computeArenaBounds(wallsNode);
         this._playerNode = playerNode ?? null;
         this._onHit = onHit ?? null;
         this._onRecycle = onRecycle ?? null;
@@ -51,7 +52,6 @@ export class BossBullet extends Component {
         );
         this.node.setPosition(_tempVec3);
 
-        // Check collision with player
         if (this._playerNode && this._playerNode.active) {
             const playerPos = this._playerNode.worldPosition;
             const bulletPos = this.node.worldPosition;
@@ -82,17 +82,5 @@ export class BossBullet extends Component {
                 this.node.destroy();
             }
         }
-    }
-
-    private _computeBounds(wallsNode: Node) {
-        const left = wallsNode.getChildByName('Left')!;
-        const right = wallsNode.getChildByName('Right')!;
-        const top = wallsNode.getChildByName('Top')!;
-        const down = wallsNode.getChildByName('Down')!;
-
-        this._bounds.minX = left.position.x + left.getComponent(UITransform)!.contentSize.width / 2;
-        this._bounds.maxX = right.position.x - right.getComponent(UITransform)!.contentSize.width / 2;
-        this._bounds.minY = down.position.y + down.getComponent(UITransform)!.contentSize.height / 2;
-        this._bounds.maxY = top.position.y - top.getComponent(UITransform)!.contentSize.height / 2;
     }
 }

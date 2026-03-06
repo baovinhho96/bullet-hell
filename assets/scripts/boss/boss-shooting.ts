@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Prefab, Vec3, toRadian } from 'cc';
 import { BossConfig } from './boss-config';
 import { BossBullet } from './boss-bullet';
-import { BossBulletHitEffect } from './boss-bullet-hit-effect';
+import { HitEffect } from '../utils/hit-effect';
 import { BossPhase, BossPhaseTracker } from './boss-phase';
 import { CombatManager } from '../combat/combat-manager';
 import { NodePool } from '../utils/object-pool';
@@ -23,7 +23,7 @@ export class BossShooting extends Component {
     bullet1Prefab: Prefab = null!;
 
     private _fireTimer = 0;
-    private _hitEffect!: BossBulletHitEffect;
+    private _hitEffect!: HitEffect;
     private _phase = BossPhase.Phase1;
     private _pool!: NodePool;
 
@@ -35,7 +35,8 @@ export class BossShooting extends Component {
     start() {
         this._pool = new NodePool(this.bullet1Prefab);
         this._fireTimer = BossConfig.startDelay;
-        this._hitEffect = this.node.addComponent(BossBulletHitEffect);
+        this._hitEffect = this.node.addComponent(HitEffect);
+        this._hitEffect.init(BossConfig.hitEffect);
     }
 
     update(dt: number) {

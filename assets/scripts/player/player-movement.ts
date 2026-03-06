@@ -1,9 +1,10 @@
 import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode, math, toDegree, UITransform } from 'cc';
 import { PlayerConfig } from './player-config';
-import { DashAfterimage } from './dash-afterimage';
 import { CombatManager } from '../combat/combat-manager';
 import { PlayerAi } from './player-ai';
 import { BossPhase, BossPhaseTracker } from '../boss/boss-phase';
+import { DashAfterimage } from '../utils/dash-afterimage';
+import { ArenaBounds, computeArenaBounds } from '../utils/arena-bounds';
 
 const { ccclass, property } = _decorator;
 
@@ -23,12 +24,13 @@ export class PlayerMovement extends Component {
     private _dashTimer = 0;
     private _dashCooldownTimer = 0;
     private _afterimage: DashAfterimage = null!;
-    private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    private _bounds: ArenaBounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     private _ai = new PlayerAi();
     private _phase = BossPhase.Phase1;
 
     start() {
         this._afterimage = this.node.addComponent(DashAfterimage);
+        this._afterimage.init(PlayerConfig.afterimage);
         this._computeBounds();
         PlayerAi.setMoveSpeed(PlayerConfig.moveSpeed);
     }
@@ -122,20 +124,8 @@ export class PlayerMovement extends Component {
 
     private _computeBounds() {
         if (!this.wallsNode) return;
-
-        const left = this.wallsNode.getChildByName('Left')!;
-        const right = this.wallsNode.getChildByName('Right')!;
-        const top = this.wallsNode.getChildByName('Top')!;
-        const down = this.wallsNode.getChildByName('Down')!;
-
-        const selfSize = this.node.getComponent(UITransform)!.contentSize;
-        const halfW = selfSize.width / 2;
-        const halfH = selfSize.height / 2;
-
-        this._bounds.minX = left.position.x + left.getComponent(UITransform)!.contentSize.width / 2 + halfW;
-        this._bounds.maxX = right.position.x - right.getComponent(UITransform)!.contentSize.width / 2 - halfW;
-        this._bounds.minY = down.position.y + down.getComponent(UITransform)!.contentSize.height / 2 + halfH;
-        this._bounds.maxY = top.position.y - top.getComponent(UITransform)!.contentSize.height / 2 - halfH;
+        const size = this.node.getComponent(UITransform)!.contentSize;
+        this._bounds = computeArenaBounds(this.wallsNode, size.width / 2, size.height / 2);
     }
 
     private _clampPosition() {

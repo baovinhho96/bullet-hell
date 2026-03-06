@@ -46,15 +46,12 @@ export class CameraFollow extends Component {
         const camPos = this.node.position;
         const pad = this.edgePadding;
 
-        // Player position relative to camera
         const relX = targetPos.x - camPos.x;
         const relY = targetPos.y - camPos.y;
 
-        // Inner bounds the player must stay within
         const limitX = this._halfViewW - pad;
         const limitY = this._halfViewH - pad;
 
-        // Only move camera if player exceeds the inner bounds
         let pushX = 0;
         let pushY = 0;
         if (relX > limitX) pushX = relX - limitX;
@@ -71,7 +68,6 @@ export class CameraFollow extends Component {
             newY += pushY * t;
         }
 
-        // Always clamp within wall bounds
         newX = math.clamp(newX, this._bounds.minX, this._bounds.maxX);
         newY = math.clamp(newY, this._bounds.minY, this._bounds.maxY);
 
@@ -82,7 +78,6 @@ export class CameraFollow extends Component {
     }
 
     private _computeBounds() {
-        // Outer edges of walls (so walls are fully visible)
         const leftOuter = this._leftWall.position.x - this._leftWall.getComponent(UITransform)!.contentSize.width / 2;
         const rightOuter = this._rightWall.position.x + this._rightWall.getComponent(UITransform)!.contentSize.width / 2;
         const bottomOuter = this._bottomWall.position.y - this._bottomWall.getComponent(UITransform)!.contentSize.height / 2;
@@ -95,13 +90,11 @@ export class CameraFollow extends Component {
         this._halfViewW = halfViewW;
         this._halfViewH = halfViewH;
 
-        // Camera center must keep viewport edges at wall outer edges
         this._bounds.minX = leftOuter + halfViewW;
         this._bounds.maxX = rightOuter - halfViewW;
         this._bounds.minY = bottomOuter + halfViewH;
         this._bounds.maxY = topOuter - halfViewH;
 
-        // If arena is smaller than view, center the camera
         if (this._bounds.minX > this._bounds.maxX) {
             this._bounds.minX = this._bounds.maxX = (leftOuter + rightOuter) / 2;
         }

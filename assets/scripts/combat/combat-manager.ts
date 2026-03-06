@@ -1,8 +1,7 @@
 import { _decorator, Component, Node, director } from 'cc';
 import { CombatConfig } from './combat-config';
 import { Health } from './health';
-import { BossHealthBar } from './boss-health-bar';
-import { PlayerHealthBar } from './player-health-bar';
+import { HealthBar } from './health-bar';
 import { BossPhaseTracker } from '../boss/boss-phase';
 import { BossMovement } from '../boss/boss-movement';
 import { BossShooting } from '../boss/boss-shooting';
@@ -52,36 +51,29 @@ export class CombatManager extends Component {
             sound.fadeInFullVolume();
         }
         sound.playBgm();
-        // Add Health to boss
         const bossHealth = this.bossNode.addComponent(Health);
         bossHealth.init(CombatConfig.boss.maxHp, CombatConfig.boss.iFrameDuration);
 
-        // Add Health to player
         const playerHealth = this.playerNode.addComponent(Health);
         playerHealth.init(CombatConfig.player.maxHp, CombatConfig.player.iFrameDuration);
 
-        // Get health bars from scene nodes
-        const bossHealthBar = this.healthBarNode.getComponent(BossHealthBar)!;
-        const playerHealthBar = this.playerHealthBarNode.getComponent(PlayerHealthBar)!;
+        const bossHealthBar = this.healthBarNode.getComponent(HealthBar)!;
+        const playerHealthBar = this.playerHealthBarNode.getComponent(HealthBar)!;
 
-        // Set up phase tracker
         const phaseTracker = new BossPhaseTracker();
         this.bossNode.getComponent(BossMovement)?.setPhaseTracker(phaseTracker);
         this.bossNode.getComponent(BossShooting)?.setPhaseTracker(phaseTracker);
         this.playerNode.getComponent(PlayerMovement)?.setPhaseTracker(phaseTracker);
 
-        // Wire boss damage → health bar update + phase tracking
         bossHealth.onDamage((current, max) => {
             bossHealthBar.updateHealth(current, max);
             phaseTracker.update(current / max);
         });
 
-        // Wire player damage → health bar update
         playerHealth.onDamage((current, max) => {
             playerHealthBar.updateHealth(current, max);
         });
 
-        // Boss death → Victory or restart demo
         bossHealth.onDeath(() => {
             if (CombatManager.demoMode) {
                 this._restartDemo();
@@ -93,7 +85,6 @@ export class CombatManager extends Component {
             this.victoryPopupNode.getComponent(VictoryPopup)?.show();
         });
 
-        // Player death → Game over or restart demo
         playerHealth.onDeath(() => {
             if (CombatManager.demoMode) {
                 this._restartDemo();

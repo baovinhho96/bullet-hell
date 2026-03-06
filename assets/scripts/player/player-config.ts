@@ -14,6 +14,7 @@ export const PlayerConfig = {
             scaleTo: 1.2,
             duration: 0.2,
             color: new Color(255, 200, 50, 200),
+            radius: 8,
         },
     },
 

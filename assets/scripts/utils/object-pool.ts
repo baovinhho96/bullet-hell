@@ -1,8 +1,5 @@
 import { Node, Prefab, instantiate } from 'cc';
 
-/**
- * Generic object pool with a factory function.
- */
 export class ObjectPool<T> {
     private _items: T[] = [];
     private _factory: () => T;
@@ -24,10 +21,6 @@ export class ObjectPool<T> {
     }
 }
 
-/**
- * Node pool with automatic activate/deactivate and removeFromParent.
- * Accepts a Prefab or a factory function.
- */
 export class NodePool {
     private _items: Node[] = [];
     private _factory: () => Node;
@@ -53,7 +46,6 @@ export class NodePool {
         this._items.push(node);
     }
 
-    /** Bound put — pass directly as a recycle callback. */
     recycle = (node: Node): void => {
         this.put(node);
     };

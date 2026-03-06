@@ -1,15 +1,26 @@
 import { _decorator, Component, Node, UIOpacity, Vec3, UITransform, Graphics, tween, Color } from 'cc';
-import { PlayerConfig } from './player-config';
-import { ObjectPool } from '../utils/object-pool';
+import { ObjectPool } from './object-pool';
 
 const { ccclass } = _decorator;
 
-@ccclass('BulletHitEffect')
-export class BulletHitEffect extends Component {
+interface HitEffectConfig {
+    scaleTo: number;
+    duration: number;
+    color: Color;
+    radius: number;
+}
+
+@ccclass('HitEffect')
+export class HitEffect extends Component {
     private _pool = new ObjectPool<Node>(() => this._createNode());
+    private _config: HitEffectConfig = null!;
+
+    init(config: HitEffectConfig) {
+        this._config = config;
+    }
 
     spawn(worldPos: Vec3) {
-        const cfg = PlayerConfig.shooting.hitEffect;
+        const cfg = this._config;
 
         const fx = this._pool.get();
         fx.active = true;
@@ -33,16 +44,18 @@ export class BulletHitEffect extends Component {
     }
 
     private _createNode(): Node {
-        const node = new Node('BulletHitFX');
+        const cfg = this._config;
+        const node = new Node('HitFX');
         node.setParent(this.node);
 
+        const size = cfg.radius * 2;
         const transform = node.addComponent(UITransform);
-        transform.setContentSize(16, 16);
+        transform.setContentSize(size, size);
 
         const g = node.addComponent(Graphics);
-        const c = PlayerConfig.shooting.hitEffect.color;
+        const c = cfg.color;
         g.fillColor = new Color(c.r, c.g, c.b, c.a);
-        g.circle(0, 0, 8);
+        g.circle(0, 0, cfg.radius);
         g.fill();
 
         node.addComponent(UIOpacity);

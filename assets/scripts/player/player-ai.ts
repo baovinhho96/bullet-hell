@@ -37,18 +37,14 @@ export class PlayerAi {
     readonly direction = new Vec3();
     wantsDash = false;
 
-    // Preallocated candidate directions and scores
     private _candidates: Vec3[] = [];
     private _scores: number[] = new Float64Array(NUM_DIRECTIONS) as unknown as number[];
 
-    // Orbit state
     private _orbitCW = true;
     private _orbitReevalTimer = 0;
 
-    // Dash state
     private _dashCooldownTimer = 0;
 
-    // Temp vectors (zero allocation per frame)
     private _predictedPlayer = new Vec3();
     private _predictedBullet = new Vec3();
 
@@ -68,21 +64,17 @@ export class PlayerAi {
         const orbitDist = ORBIT_DIST_BY_PHASE[phase];
         const centerPull = phase === BossPhase.Phase3 ? CENTER_PULL_WEIGHT + 0.3 : CENTER_PULL_WEIGHT;
 
-        // Re-evaluate orbit direction periodically
         this._orbitReevalTimer -= dt;
         if (this._orbitReevalTimer <= 0 && bossPos) {
             this._orbitReevalTimer = ORBIT_REEVAL_INTERVAL;
             this._reevaluateOrbitDirection(selfPos, bossPos);
         }
 
-        // Precompute arena center
         const centerX = (bounds.minX + bounds.maxX) * 0.5;
         const centerY = (bounds.minY + bounds.maxY) * 0.5;
 
-        // Get active bullets once
         const bullets = BossBullet.activeBullets;
 
-        // Score each candidate direction
         let bestIdx = 0;
         let bestScore = -Infinity;
 
@@ -92,18 +84,15 @@ export class PlayerAi {
             pp.x = selfPos.x + cand.x * PlayerAi._moveSpeed * LOOKAHEAD_TIME;
             pp.y = selfPos.y + cand.y * PlayerAi._moveSpeed * LOOKAHEAD_TIME;
 
-            // --- Danger ---
             let danger = 0;
             for (const bullet of bullets) {
                 const bPos = bullet.node.worldPosition;
                 const bDir = bullet.bulletDirection;
                 const bSpd = bullet.bulletSpeed;
 
-                // Predicted bullet position
                 const pbx = bPos.x + bDir.x * bSpd * LOOKAHEAD_TIME;
                 const pby = bPos.y + bDir.y * bSpd * LOOKAHEAD_TIME;
 
-                // Distance from predicted player to predicted bullet
                 let dx = pp.x - pbx;
                 let dy = pp.y - pby;
                 let distSq = dx * dx + dy * dy;
@@ -116,7 +105,6 @@ export class PlayerAi {
                     }
                 }
 
-                // Also check bullet's CURRENT position against predicted player
                 dx = pp.x - bPos.x;
                 dy = pp.y - bPos.y;
                 distSq = dx * dx + dy * dy;
@@ -126,7 +114,6 @@ export class PlayerAi {
                 }
             }
 
-            // --- Orbit bias ---
             let orbitBias = 0;
             if (bossPos) {
                 const toBossX = bossPos.x - selfPos.x;
@@ -135,19 +122,15 @@ export class PlayerAi {
                 if (distToBoss > 0.01) {
                     const nx = toBossX / distToBoss;
                     const ny = toBossY / distToBoss;
-                    // Tangent direction (CW or CCW)
                     const tx = this._orbitCW ? -ny : ny;
                     const ty = this._orbitCW ? nx : -nx;
-                    // Dot product with candidate = alignment with orbit tangent
                     orbitBias = (cand.x * tx + cand.y * ty) * ORBIT_BIAS_WEIGHT;
 
-                    // Radial correction to maintain orbit distance
                     const radialErr = (distToBoss - orbitDist) / orbitDist;
                     orbitBias += (cand.x * nx + cand.y * ny) * radialErr * 0.5;
                 }
             }
 
-            // --- Center pull ---
             const toCenterX = centerX - selfPos.x;
             const toCenterY = centerY - selfPos.y;
             const toCenterLen = Math.sqrt(toCenterX * toCenterX + toCenterY * toCenterY);
@@ -156,7 +139,6 @@ export class PlayerAi {
                 pull = (cand.x * toCenterX / toCenterLen + cand.y * toCenterY / toCenterLen) * centerPull;
             }
 
-            // --- Wall penalty ---
             let wallPen = 0;
             const distLeft = pp.x - bounds.minX;
             const distRight = bounds.maxX - pp.x;
@@ -178,7 +160,6 @@ export class PlayerAi {
 
         ai.set(this._candidates[bestIdx]);
 
-        // --- Dash logic (separate pass) ---
         this._dashCooldownTimer -= dt;
         if (this._dashCooldownTimer <= 0) {
             let totalPressure = 0;
@@ -213,14 +194,12 @@ export class PlayerAi {
         const nx = toBossX / dist;
         const ny = toBossY / dist;
 
-        // CW tangent = (-ny, nx), CCW tangent = (ny, -nx)
         const cwX = -ny, cwY = nx;
         const ccwX = ny, ccwY = -nx;
 
         let cwDanger = 0;
         let ccwDanger = 0;
 
-        // Sample danger along each tangent direction
         const sampleDist = 80;
         const cwPosX = selfPos.x + cwX * sampleDist;
         const cwPosY = selfPos.y + cwY * sampleDist;
@@ -248,7 +227,6 @@ export class PlayerAi {
         this._orbitCW = cwDanger <= ccwDanger;
     }
 
-    // Player move speed for lookahead projection — set from PlayerConfig externally
     private static _moveSpeed = 300;
     static setMoveSpeed(speed: number) { PlayerAi._moveSpeed = speed; }
 }

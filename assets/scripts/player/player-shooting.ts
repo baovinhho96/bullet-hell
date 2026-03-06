@@ -1,7 +1,7 @@
 import { _decorator, Component, Node, Prefab, Vec3, toDegree, UITransform } from 'cc';
 import { PlayerConfig } from './player-config';
 import { PlayerBullet } from './player-bullet';
-import { BulletHitEffect } from './bullet-hit-effect';
+import { HitEffect } from '../utils/hit-effect';
 import { CombatConfig } from '../combat/combat-config';
 import { Health } from '../combat/health';
 import { CombatManager } from '../combat/combat-manager';
@@ -21,14 +21,15 @@ export class PlayerShooting extends Component {
     bulletPrefab: Prefab = null!;
 
     private _fireTimer = 0;
-    private _hitEffect: BulletHitEffect = null!;
+    private _hitEffect: HitEffect = null!;
     private _pool!: NodePool;
 
     start() {
         this._pool = new NodePool(this.bulletPrefab);
         const fxNode = new Node('HitEffectPool');
         fxNode.setParent(this.node.parent);
-        this._hitEffect = fxNode.addComponent(BulletHitEffect);
+        this._hitEffect = fxNode.addComponent(HitEffect);
+        this._hitEffect.init(PlayerConfig.shooting.hitEffect);
     }
 
     update(dt: number) {

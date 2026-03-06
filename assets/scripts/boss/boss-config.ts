@@ -20,6 +20,7 @@ export const BossConfig = {
         scaleTo: 1.5,
         duration: 0.25,
         color: new Color(255, 80, 80, 200),
+        radius: 10,
     },
 
     shooting: {

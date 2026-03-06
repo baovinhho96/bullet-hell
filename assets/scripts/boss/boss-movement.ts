@@ -1,8 +1,9 @@
 import { _decorator, Component, Node, Vec3, math, toDegree, UITransform } from 'cc';
 import { BossConfig } from './boss-config';
-import { BossDashAfterimage } from './boss-dash-afterimage';
 import { BossPhase, BossPhaseTracker } from './boss-phase';
 import { CombatManager } from '../combat/combat-manager';
+import { DashAfterimage } from '../utils/dash-afterimage';
+import { ArenaBounds, computeArenaBounds } from '../utils/arena-bounds';
 
 const { ccclass, property } = _decorator;
 
@@ -17,14 +18,14 @@ export class BossMovement extends Component {
     wallsNode: Node = null!;
 
     private _startTimer = 0;
-    private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    private _bounds: ArenaBounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
 
     private _isDashing = false;
     private _dashTimer = 0;
     private _dashCooldownTimer = 0;
     private _dashDir = new Vec3();
     private _casualDashTimer = 0;
-    private _afterimage: BossDashAfterimage = null!;
+    private _afterimage: DashAfterimage = null!;
     private _phase = BossPhase.Phase1;
 
     setPhaseTracker(tracker: BossPhaseTracker) {
@@ -35,7 +36,8 @@ export class BossMovement extends Component {
     start() {
         this._startTimer = BossConfig.startDelay;
         this._computeBounds();
-        this._afterimage = this.node.addComponent(BossDashAfterimage);
+        this._afterimage = this.node.addComponent(DashAfterimage);
+        this._afterimage.init(BossConfig.afterimage);
         this._resetCasualDashTimer();
     }
 
@@ -71,7 +73,6 @@ export class BossMovement extends Component {
         }
     }
 
-    /** Casual dash: pick a random direction biased toward the player */
     private _startCasualDash() {
         const selfPos = this.node.worldPosition;
         const targetPos = this.playerNode.worldPosition;
@@ -81,10 +82,9 @@ export class BossMovement extends Component {
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist > 1) {
-            // Bias toward player direction with some randomness
             const toPlayerX = dx / dist;
             const toPlayerY = dy / dist;
-            const randAngle = (Math.random() - 0.5) * Math.PI * 0.45; // +-40 degrees
+            const randAngle = (Math.random() - 0.5) * Math.PI * 0.45;
             const cos = Math.cos(randAngle);
             const sin = Math.sin(randAngle);
             this._dashDir.set(
@@ -102,7 +102,6 @@ export class BossMovement extends Component {
         this._dashTimer = BossConfig.dashDuration;
     }
 
-    /** Chase dash: triggered when player is too far, dash directly toward them */
     private _checkChaseDash() {
         if (this._isDashing || this._dashCooldownTimer > 0) return;
 
@@ -177,20 +176,8 @@ export class BossMovement extends Component {
 
     private _computeBounds() {
         if (!this.wallsNode) return;
-
-        const left = this.wallsNode.getChildByName('Left')!;
-        const right = this.wallsNode.getChildByName('Right')!;
-        const top = this.wallsNode.getChildByName('Top')!;
-        const down = this.wallsNode.getChildByName('Down')!;
-
-        const selfSize = this.node.getComponent(UITransform)!.contentSize;
-        const halfW = selfSize.width / 2;
-        const halfH = selfSize.height / 2;
-
-        this._bounds.minX = left.position.x + left.getComponent(UITransform)!.contentSize.width / 2 + halfW;
-        this._bounds.maxX = right.position.x - right.getComponent(UITransform)!.contentSize.width / 2 - halfW;
-        this._bounds.minY = down.position.y + down.getComponent(UITransform)!.contentSize.height / 2 + halfH;
-        this._bounds.maxY = top.position.y - top.getComponent(UITransform)!.contentSize.height / 2 - halfH;
+        const size = this.node.getComponent(UITransform)!.contentSize;
+        this._bounds = computeArenaBounds(this.wallsNode, size.width / 2, size.height / 2);
     }
 
     private _clampPosition() {
