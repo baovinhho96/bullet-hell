@@ -1,13 +1,13 @@
 import { _decorator, Component, Node, Vec3, input, Input, EventKeyboard, KeyCode, math, toDegree, UITransform } from 'cc';
-import { CharacterConfig } from './character-config';
+import { PlayerConfig } from './player-config';
 import { DashAfterimage } from './dash-afterimage';
 
 const { ccclass, property } = _decorator;
 
 const _tempVec3 = new Vec3();
 
-@ccclass('CharacterMovement')
-export class CharacterMovement extends Component {
+@ccclass('PlayerMovement')
+export class PlayerMovement extends Component {
     @property(Node)
     bossNode: Node = null!;
 
@@ -62,7 +62,7 @@ export class CharacterMovement extends Component {
         if (this._moveDir.lengthSqr() === 0) return;
 
         this._isDashing = true;
-        this._dashTimer = CharacterConfig.dashDuration;
+        this._dashTimer = PlayerConfig.dashDuration;
     }
 
     private _updateDashTimers(dt: number) {
@@ -70,7 +70,7 @@ export class CharacterMovement extends Component {
             this._dashTimer -= dt;
             if (this._dashTimer <= 0) {
                 this._isDashing = false;
-                this._dashCooldownTimer = CharacterConfig.dashCooldown;
+                this._dashCooldownTimer = PlayerConfig.dashCooldown;
             }
         }
 
@@ -91,7 +91,7 @@ export class CharacterMovement extends Component {
         if (dir.lengthSqr() === 0) return;
 
         dir.normalize();
-        const speed = this._isDashing ? CharacterConfig.dashSpeed : CharacterConfig.moveSpeed;
+        const speed = this._isDashing ? PlayerConfig.dashSpeed : PlayerConfig.moveSpeed;
         const pos = this.node.position;
         _tempVec3.set(
             pos.x + dir.x * speed * dt,

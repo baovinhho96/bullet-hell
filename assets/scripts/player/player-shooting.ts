@@ -1,14 +1,16 @@
 import { _decorator, Component, Node, Prefab, Vec3, instantiate, toDegree, UITransform } from 'cc';
-import { CharacterConfig } from './character-config';
-import { CharacterBullet } from './character-bullet';
+import { PlayerConfig } from './player-config';
+import { PlayerBullet } from './player-bullet';
 import { BulletHitEffect } from './bullet-hit-effect';
+import { CombatConfig } from '../combat/combat-config';
+import { Health } from '../combat/health';
 
 const { ccclass, property } = _decorator;
 
 const _dir = new Vec3();
 
-@ccclass('CharacterShooting')
-export class CharacterShooting extends Component {
+@ccclass('PlayerShooting')
+export class PlayerShooting extends Component {
     @property(Node)
     bossNode: Node = null!;
 
@@ -34,10 +36,10 @@ export class CharacterShooting extends Component {
         Vec3.subtract(_dir, bossPos, selfPos);
         const distance = _dir.length();
 
-        if (distance > CharacterConfig.shooting.attackRange) return;
+        if (distance > PlayerConfig.shooting.attackRange) return;
         if (this._fireTimer > 0) return;
 
-        this._fireTimer = CharacterConfig.shooting.fireRate;
+        this._fireTimer = PlayerConfig.shooting.fireRate;
         this._fire(_dir, distance);
     }
 
@@ -57,7 +59,7 @@ export class CharacterShooting extends Component {
         const angle = toDegree(Math.atan2(dir.x, dir.y));
         bullet.setRotationFromEuler(0, 0, -angle + 90);
 
-        bullet.getComponent(CharacterBullet)!.init(dir, hitDistance, (hitDir) => {
+        bullet.getComponent(PlayerBullet)!.init(dir, hitDistance, (hitDir) => {
             this._onBulletHit(hitDir);
         });
     }
@@ -72,5 +74,10 @@ export class CharacterShooting extends Component {
             bossPos.z,
         );
         this._hitEffect.spawn(edgePos);
+
+        const health = this.bossNode.getComponent(Health);
+        if (health && !health.isDead) {
+            health.takeDamage(CombatConfig.damage.playerBullet);
+        }
     }
 }

@@ -1,6 +1,6 @@
 import { Color } from 'cc';
 
-export const CharacterConfig = {
+export const PlayerConfig = {
     moveSpeed: 300,
     dashSpeed: 600,
     dashDuration: 0.15,

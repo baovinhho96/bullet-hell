@@ -1,12 +1,12 @@
 import { _decorator, Component, Vec3 } from 'cc';
-import { CharacterConfig } from './character-config';
+import { PlayerConfig } from './player-config';
 
 const { ccclass } = _decorator;
 
 const _tempVec3 = new Vec3();
 
-@ccclass('CharacterBullet')
-export class CharacterBullet extends Component {
+@ccclass('PlayerBullet')
+export class PlayerBullet extends Component {
     private _direction = new Vec3();
     private _targetDistance = 0;
     private _traveled = 0;
@@ -20,7 +20,7 @@ export class CharacterBullet extends Component {
     }
 
     update(dt: number) {
-        const speed = CharacterConfig.shooting.bulletSpeed;
+        const speed = PlayerConfig.shooting.bulletSpeed;
         const step = speed * dt;
         this._traveled += step;
 

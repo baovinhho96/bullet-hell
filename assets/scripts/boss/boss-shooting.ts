@@ -9,7 +9,7 @@ const _dir = new Vec3();
 @ccclass('BossShooting')
 export class BossShooting extends Component {
     @property(Node)
-    characterNode: Node = null!;
+    playerNode: Node = null!;
 
     @property(Node)
     wallsNode: Node = null!;
@@ -24,7 +24,7 @@ export class BossShooting extends Component {
     }
 
     update(dt: number) {
-        if (!this.characterNode) return;
+        if (!this.playerNode) return;
 
         this._fireTimer -= dt;
         if (this._fireTimer > 0) return;
@@ -35,23 +35,23 @@ export class BossShooting extends Component {
 
     private _firePattern1() {
         const selfPos = this.node.worldPosition;
-        const targetPos = this.characterNode.worldPosition;
+        const targetPos = this.playerNode.worldPosition;
 
         Vec3.subtract(_dir, targetPos, selfPos);
         _dir.z = 0;
         const dist = _dir.length();
         if (dist < 1) return;
 
-        // Center angle toward character
+        // Center angle toward player
         const centerAngle = Math.atan2(_dir.y, _dir.x);
 
         const { bulletCount, arcDegrees } = BossConfig.shooting1;
         const arcRad = toRadian(arcDegrees);
-        const startAngle = centerAngle - arcRad / 2;
-        const step = arcRad / (bulletCount - 1);
+        const step = bulletCount > 1 ? arcRad / (bulletCount - 1) : 0;
+        const centerIdx = Math.floor((bulletCount - 1) / 2);
 
         for (let i = 0; i < bulletCount; i++) {
-            const angle = startAngle + step * i;
+            const angle = centerAngle + (i - centerIdx) * step;
             const dir = new Vec3(Math.cos(angle), Math.sin(angle), 0);
             this._spawnBullet(dir);
         }
@@ -62,6 +62,6 @@ export class BossShooting extends Component {
         bullet.setParent(this.node.parent);
         bullet.setWorldPosition(this.node.worldPosition);
 
-        bullet.getComponent(BossBullet)!.init(direction, this.wallsNode);
+        bullet.getComponent(BossBullet)!.init(direction, this.wallsNode, this.playerNode);
     }
 }

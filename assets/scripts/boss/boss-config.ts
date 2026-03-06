@@ -5,8 +5,8 @@ export const BossConfig = {
     keepDistance: 400,
     startDelay: 2,
 
-    dashSpeed: 500,
-    dashDuration: 0.18,
+    dashSpeed: 700,
+    dashDuration: 0.3,
     dashCooldown: 1.5,
 
     /** Random interval range (seconds) between casual dashes */
@@ -27,7 +27,7 @@ export const BossConfig = {
         bulletCount: 6,
         /** Half-circle arc spread in degrees */
         arcDegrees: 160,
-        /** Bullet travel speed (px/s) — slower than character's 300 moveSpeed so they can dodge */
+        /** Bullet travel speed (px/s) — slower than player's 300 moveSpeed so they can dodge */
         bulletSpeed: 220,
         /** Time between bursts (seconds) */
         fireCooldown: 3,

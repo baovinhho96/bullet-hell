@@ -15,7 +15,7 @@ export class CameraFollow extends Component {
     @property({ tooltip: 'Smooth follow speed (higher = snappier)' })
     smoothSpeed: number = 5;
 
-    @property({ tooltip: 'Minimum distance (px) character must remain inside the viewport edge' })
+    @property({ tooltip: 'Minimum distance (px) player must remain inside the viewport edge' })
     edgePadding: number = 100;
 
     private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
@@ -36,15 +36,15 @@ export class CameraFollow extends Component {
         const camPos = this.node.position;
         const pad = this.edgePadding;
 
-        // Character position relative to camera
+        // Player position relative to camera
         const relX = targetPos.x - camPos.x;
         const relY = targetPos.y - camPos.y;
 
-        // Inner bounds the character must stay within
+        // Inner bounds the player must stay within
         const limitX = this._halfViewW - pad;
         const limitY = this._halfViewH - pad;
 
-        // Only move camera if character exceeds the inner bounds
+        // Only move camera if player exceeds the inner bounds
         let pushX = 0;
         let pushY = 0;
         if (relX > limitX) pushX = relX - limitX;

@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, UIOpacity, Vec3, UITransform, Graphics, tween, Color } from 'cc';
-import { CharacterConfig } from './character-config';
+import { PlayerConfig } from './player-config';
 
 const { ccclass } = _decorator;
 
@@ -8,7 +8,7 @@ export class BulletHitEffect extends Component {
     private _pool: Node[] = [];
 
     spawn(worldPos: Vec3) {
-        const cfg = CharacterConfig.shooting.hitEffect;
+        const cfg = PlayerConfig.shooting.hitEffect;
 
         let fx = this._pool.pop();
         if (!fx) {
@@ -43,7 +43,7 @@ export class BulletHitEffect extends Component {
         transform.setContentSize(16, 16);
 
         const g = node.addComponent(Graphics);
-        const c = CharacterConfig.shooting.hitEffect.color;
+        const c = PlayerConfig.shooting.hitEffect.color;
         g.fillColor = new Color(c.r, c.g, c.b, c.a);
         g.circle(0, 0, 8);
         g.fill();

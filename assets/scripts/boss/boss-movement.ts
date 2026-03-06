@@ -9,7 +9,7 @@ const _tempVec3 = new Vec3();
 @ccclass('BossMovement')
 export class BossMovement extends Component {
     @property(Node)
-    characterNode: Node = null!;
+    playerNode: Node = null!;
 
     @property(Node)
     wallsNode: Node = null!;
@@ -32,11 +32,11 @@ export class BossMovement extends Component {
     }
 
     update(dt: number) {
-        if (!this.characterNode) return;
+        if (!this.playerNode) return;
 
         if (this._startTimer > 0) {
             this._startTimer -= dt;
-            this._lookAtCharacter();
+            this._lookAtPlayer();
             return;
         }
 
@@ -45,7 +45,7 @@ export class BossMovement extends Component {
         this._checkChaseDash();
         this._move(dt);
         this._clampPosition();
-        this._lookAtCharacter();
+        this._lookAtPlayer();
         this._afterimage.onDashFrame(this._isDashing, dt);
     }
 
@@ -63,25 +63,25 @@ export class BossMovement extends Component {
         }
     }
 
-    /** Casual dash: pick a random direction biased toward the character */
+    /** Casual dash: pick a random direction biased toward the player */
     private _startCasualDash() {
         const selfPos = this.node.worldPosition;
-        const targetPos = this.characterNode.worldPosition;
+        const targetPos = this.playerNode.worldPosition;
 
         const dx = targetPos.x - selfPos.x;
         const dy = targetPos.y - selfPos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
 
         if (dist > 1) {
-            // Bias toward character direction with some randomness
-            const toCharX = dx / dist;
-            const toCharY = dy / dist;
-            const randAngle = (Math.random() - 0.5) * Math.PI; // +-90 degrees
+            // Bias toward player direction with some randomness
+            const toPlayerX = dx / dist;
+            const toPlayerY = dy / dist;
+            const randAngle = (Math.random() - 0.5) * Math.PI * 0.45; // +-40 degrees
             const cos = Math.cos(randAngle);
             const sin = Math.sin(randAngle);
             this._dashDir.set(
-                toCharX * cos - toCharY * sin,
-                toCharX * sin + toCharY * cos,
+                toPlayerX * cos - toPlayerY * sin,
+                toPlayerX * sin + toPlayerY * cos,
                 0,
             );
         } else {
@@ -94,12 +94,12 @@ export class BossMovement extends Component {
         this._dashTimer = BossConfig.dashDuration;
     }
 
-    /** Chase dash: triggered when character is too far, dash directly toward them */
+    /** Chase dash: triggered when player is too far, dash directly toward them */
     private _checkChaseDash() {
         if (this._isDashing || this._dashCooldownTimer > 0) return;
 
         const selfPos = this.node.worldPosition;
-        const targetPos = this.characterNode.worldPosition;
+        const targetPos = this.playerNode.worldPosition;
         const dx = targetPos.x - selfPos.x;
         const dy = targetPos.y - selfPos.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
@@ -131,7 +131,7 @@ export class BossMovement extends Component {
         if (this._isDashing) {
             this._dashMove(dt);
         } else {
-            this._moveTowardCharacter(dt);
+            this._moveTowardPlayer(dt);
         }
     }
 
@@ -145,9 +145,9 @@ export class BossMovement extends Component {
         this.node.setPosition(_tempVec3);
     }
 
-    private _moveTowardCharacter(dt: number) {
+    private _moveTowardPlayer(dt: number) {
         const selfPos = this.node.worldPosition;
-        const targetPos = this.characterNode.worldPosition;
+        const targetPos = this.playerNode.worldPosition;
 
         const dx = targetPos.x - selfPos.x;
         const dy = targetPos.y - selfPos.y;
@@ -197,11 +197,11 @@ export class BossMovement extends Component {
         }
     }
 
-    private _lookAtCharacter() {
-        if (!this.characterNode) return;
+    private _lookAtPlayer() {
+        if (!this.playerNode) return;
 
         const selfPos = this.node.worldPosition;
-        const targetPos = this.characterNode.worldPosition;
+        const targetPos = this.playerNode.worldPosition;
         const dx = targetPos.x - selfPos.x;
         const dy = targetPos.y - selfPos.y;
         const angle = toDegree(Math.atan2(dx, dy));

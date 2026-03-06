@@ -1,5 +1,5 @@
 import { _decorator, Component, Node, Sprite, UIOpacity, UITransform, Color, Vec3 } from 'cc';
-import { CharacterConfig } from './character-config';
+import { PlayerConfig } from './player-config';
 
 const { ccclass } = _decorator;
 
@@ -17,10 +17,10 @@ export class DashAfterimage extends Component {
     private _pool: Ghost[] = [];
     private _active: Ghost[] = [];
     private _spawnTimer = 0;
-    private _characterSprite: Sprite = null!;
+    private _playerSprite: Sprite = null!;
 
     start() {
-        this._characterSprite = this.node.getComponent(Sprite)!;
+        this._playerSprite = this.node.getComponent(Sprite)!;
     }
 
     onDashFrame(isDashing: boolean, dt: number) {
@@ -28,7 +28,7 @@ export class DashAfterimage extends Component {
             this._spawnTimer -= dt;
             if (this._spawnTimer <= 0) {
                 this._spawnGhost();
-                this._spawnTimer = CharacterConfig.afterimage.spawnInterval;
+                this._spawnTimer = PlayerConfig.afterimage.spawnInterval;
             }
         } else {
             this._spawnTimer = 0;
@@ -45,17 +45,17 @@ export class DashAfterimage extends Component {
         node.setWorldRotation(this.node.worldRotation);
         node.setWorldScale(this.node.worldScale);
 
-        ghost.sprite.spriteFrame = this._characterSprite.spriteFrame;
-        ghost.sprite.color = CharacterConfig.afterimage.color;
-        ghost.opacity.opacity = CharacterConfig.afterimage.startOpacity;
-        ghost.timer = CharacterConfig.afterimage.fadeDuration;
+        ghost.sprite.spriteFrame = this._playerSprite.spriteFrame;
+        ghost.sprite.color = PlayerConfig.afterimage.color;
+        ghost.opacity.opacity = PlayerConfig.afterimage.startOpacity;
+        ghost.timer = PlayerConfig.afterimage.fadeDuration;
 
         node.active = true;
         this._active.push(ghost);
     }
 
     private _updateGhosts(dt: number) {
-        const { fadeDuration, startOpacity } = CharacterConfig.afterimage;
+        const { fadeDuration, startOpacity } = PlayerConfig.afterimage;
 
         for (let i = this._active.length - 1; i >= 0; i--) {
             const ghost = this._active[i];

@@ -1,5 +1,7 @@
 import { _decorator, Component, Node, Vec3, UITransform } from 'cc';
 import { BossConfig } from './boss-config';
+import { CombatConfig } from '../combat/combat-config';
+import { Health } from '../combat/health';
 
 const { ccclass, property } = _decorator;
 
@@ -9,10 +11,19 @@ const _tempVec3 = new Vec3();
 export class BossBullet extends Component {
     private _direction = new Vec3();
     private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+    private _playerNode: Node | null = null;
+    private _hitRadius = 20;
 
-    init(direction: Vec3, wallsNode: Node) {
+    init(direction: Vec3, wallsNode: Node, playerNode?: Node) {
         Vec3.normalize(this._direction, direction);
         this._computeBounds(wallsNode);
+        this._playerNode = playerNode ?? null;
+        if (playerNode) {
+            const transform = playerNode.getComponent(UITransform);
+            if (transform) {
+                this._hitRadius = Math.min(transform.contentSize.width, transform.contentSize.height) * 0.4;
+            }
+        }
     }
 
     update(dt: number) {
@@ -25,6 +36,24 @@ export class BossBullet extends Component {
             pos.z,
         );
         this.node.setPosition(_tempVec3);
+
+        // Check collision with player
+        if (this._playerNode && this._playerNode.active) {
+            const playerPos = this._playerNode.worldPosition;
+            const bulletPos = this.node.worldPosition;
+            const dx = bulletPos.x - playerPos.x;
+            const dy = bulletPos.y - playerPos.y;
+            const distSq = dx * dx + dy * dy;
+            const hitDist = this._hitRadius + 8;
+            if (distSq < hitDist * hitDist) {
+                const health = this._playerNode.getComponent(Health);
+                if (health && !health.isDead) {
+                    health.takeDamage(CombatConfig.damage.bossBullet);
+                }
+                this.node.destroy();
+                return;
+            }
+        }
 
         const { minX, maxX, minY, maxY } = this._bounds;
         if (_tempVec3.x < minX || _tempVec3.x > maxX || _tempVec3.y < minY || _tempVec3.y > maxY) {
