@@ -12,6 +12,7 @@ import { PlayerMovement } from '../player/player-movement';
 import { GameOverPopup } from '../ui/game-over-popup';
 import { VictoryPopup } from '../ui/victory-popup';
 import { StartPopup } from '../ui/start-popup';
+import { SoundManager } from '../sound/sound-manager';
 
 const { ccclass, property } = _decorator;
 
@@ -43,9 +44,14 @@ export class CombatManager extends Component {
 
     start() {
         CombatManager.gameOver = false;
+        const sound = SoundManager.instance;
         if (CombatManager.demoMode) {
+            sound.setDemoVolume();
             this.startPopupNode.getComponent(StartPopup)?.show();
+        } else {
+            sound.fadeInFullVolume();
         }
+        sound.playBgm();
         // Add Health to boss
         const bossHealth = this.bossNode.addComponent(Health);
         bossHealth.init(CombatConfig.boss.maxHp, CombatConfig.boss.iFrameDuration);

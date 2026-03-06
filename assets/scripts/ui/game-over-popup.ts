@@ -6,17 +6,17 @@ const { ccclass, property } = _decorator;
 @ccclass('GameOverPopup')
 export class GameOverPopup extends Component {
     @property(Node)
-    playAgainBtn: Node = null!;
+    backToMenuBtn: Node = null!;
 
     start() {
-        this.playAgainBtn.on(Button.EventType.CLICK, this._onPlayAgain, this);
+        this.backToMenuBtn.on(Button.EventType.CLICK, this._onBackToMenu, this);
     }
 
     show() {
         this.node.active = true;
     }
 
-    private _onPlayAgain() {
+    private _onBackToMenu() {
         CombatManager.gameOver = false;
         CombatManager.demoMode = true;
         director.loadScene(director.getScene()!.name);

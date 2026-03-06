@@ -6,6 +6,7 @@ import { CombatConfig } from '../combat/combat-config';
 import { Health } from '../combat/health';
 import { CombatManager } from '../combat/combat-manager';
 import { NodePool } from '../utils/object-pool';
+import { SoundManager } from '../sound/sound-manager';
 
 const { ccclass, property } = _decorator;
 
@@ -45,6 +46,7 @@ export class PlayerShooting extends Component {
 
         this._fireTimer = PlayerConfig.shooting.fireRate;
         this._fire(_dir, distance);
+        SoundManager.instance.playPlayerShoot();
     }
 
     private _fire(dir: Vec3, distance: number) {

@@ -5,6 +5,7 @@ import { BossBulletHitEffect } from './boss-bullet-hit-effect';
 import { BossPhase, BossPhaseTracker } from './boss-phase';
 import { CombatManager } from '../combat/combat-manager';
 import { NodePool } from '../utils/object-pool';
+import { SoundManager } from '../sound/sound-manager';
 
 const { ccclass, property } = _decorator;
 
@@ -73,6 +74,7 @@ export class BossShooting extends Component {
     }
 
     private _fireFan(bulletCount: number, arcDegrees: number, speed: number) {
+        this._playShootSound();
         const selfPos = this.node.worldPosition;
         const targetPos = this.playerNode.worldPosition;
 
@@ -93,6 +95,7 @@ export class BossShooting extends Component {
     }
 
     private _fireCrazySpiral() {
+        this._playShootSound();
         const cfg = BossConfig.shooting.crazySpiral;
         const selfPos = this.node.worldPosition;
         const targetPos = this.playerNode.worldPosition;
@@ -112,6 +115,10 @@ export class BossShooting extends Component {
                 this._spawnBullet(dir, cfg.speed);
             }, delay * i);
         }
+    }
+
+    private _playShootSound() {
+        SoundManager.instance.playBossShoot();
     }
 
     private _spawnBullet(direction: Vec3, speed: number) {
