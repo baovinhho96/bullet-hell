@@ -1,4 +1,4 @@
-import { _decorator, Component, Node, Vec3, math, UITransform, view } from 'cc';
+import { _decorator, Component, Node, Vec3, math, UITransform, Camera, screen } from 'cc';
 
 const { ccclass, property } = _decorator;
 
@@ -10,7 +10,7 @@ export class CameraFollow extends Component {
     target: Node = null!;
 
     @property(Node)
-    playground: Node = null!;
+    wallsNode: Node = null!;
 
     @property({ tooltip: 'Smooth follow speed (higher = snappier)' })
     smoothSpeed: number = 5;
@@ -21,16 +21,26 @@ export class CameraFollow extends Component {
     private _bounds = { minX: 0, maxX: 0, minY: 0, maxY: 0 };
     private _halfViewW = 0;
     private _halfViewH = 0;
+    private _cam: Camera = null!;
+    private _leftWall: Node = null!;
+    private _rightWall: Node = null!;
+    private _topWall: Node = null!;
+    private _bottomWall: Node = null!;
 
     start() {
-        this._computeBounds();
-        const visibleSize = view.getVisibleSize();
-        this._halfViewW = visibleSize.width / 2;
-        this._halfViewH = visibleSize.height / 2;
+        this._cam = this.node.getComponent(Camera)!;
+        if (this.wallsNode) {
+            this._leftWall = this.wallsNode.getChildByName('Left')!;
+            this._rightWall = this.wallsNode.getChildByName('Right')!;
+            this._topWall = this.wallsNode.getChildByName('Top')!;
+            this._bottomWall = this.wallsNode.getChildByName('Down')!;
+        }
     }
 
     lateUpdate(dt: number) {
-        if (!this.target) return;
+        if (!this.target || !this._leftWall) return;
+
+        this._computeBounds();
 
         const targetPos = this.target.position;
         const camPos = this.node.position;
@@ -52,56 +62,51 @@ export class CameraFollow extends Component {
         if (relY > limitY) pushY = relY - limitY;
         else if (relY < -limitY) pushY = relY + limitY;
 
-        if (pushX === 0 && pushY === 0) return;
+        let newX = camPos.x;
+        let newY = camPos.y;
 
-        const t = 1 - Math.exp(-this.smoothSpeed * dt);
-        _tempVec3.set(
-            camPos.x + pushX * t,
-            camPos.y + pushY * t,
-            camPos.z,
-        );
+        if (pushX !== 0 || pushY !== 0) {
+            const t = 1 - Math.exp(-this.smoothSpeed * dt);
+            newX += pushX * t;
+            newY += pushY * t;
+        }
 
-        // Clamp within playground bounds
-        _tempVec3.x = math.clamp(_tempVec3.x, this._bounds.minX, this._bounds.maxX);
-        _tempVec3.y = math.clamp(_tempVec3.y, this._bounds.minY, this._bounds.maxY);
+        // Always clamp within wall bounds
+        newX = math.clamp(newX, this._bounds.minX, this._bounds.maxX);
+        newY = math.clamp(newY, this._bounds.minY, this._bounds.maxY);
 
-        this.node.setPosition(_tempVec3);
+        if (newX !== camPos.x || newY !== camPos.y) {
+            _tempVec3.set(newX, newY, camPos.z);
+            this.node.setPosition(_tempVec3);
+        }
     }
 
     private _computeBounds() {
-        if (!this.playground) return;
+        // Outer edges of walls (so walls are fully visible)
+        const leftOuter = this._leftWall.position.x - this._leftWall.getComponent(UITransform)!.contentSize.width / 2;
+        const rightOuter = this._rightWall.position.x + this._rightWall.getComponent(UITransform)!.contentSize.width / 2;
+        const bottomOuter = this._bottomWall.position.y - this._bottomWall.getComponent(UITransform)!.contentSize.height / 2;
+        const topOuter = this._topWall.position.y + this._topWall.getComponent(UITransform)!.contentSize.height / 2;
 
-        const pgSize = this.playground.getComponent(UITransform)!.contentSize;
-        const visibleSize = view.getVisibleSize();
+        const aspect = screen.windowSize.width / screen.windowSize.height;
+        const halfViewH = this._cam.orthoHeight;
+        const halfViewW = this._cam.orthoHeight * aspect;
 
-        const halfViewW = visibleSize.width / 2;
-        const halfViewH = visibleSize.height / 2;
-        const halfPgW = pgSize.width / 2;
-        const halfPgH = pgSize.height / 2;
+        this._halfViewW = halfViewW;
+        this._halfViewH = halfViewH;
 
-        this._bounds.minX = -(halfPgW - halfViewW);
-        this._bounds.maxX = halfPgW - halfViewW;
-        this._bounds.minY = -(halfPgH - halfViewH);
-        this._bounds.maxY = halfPgH - halfViewH;
+        // Camera center must keep viewport edges at wall outer edges
+        this._bounds.minX = leftOuter + halfViewW;
+        this._bounds.maxX = rightOuter - halfViewW;
+        this._bounds.minY = bottomOuter + halfViewH;
+        this._bounds.maxY = topOuter - halfViewH;
 
-        // If playground is smaller than view, center the camera
+        // If arena is smaller than view, center the camera
         if (this._bounds.minX > this._bounds.maxX) {
-            this._bounds.minX = this._bounds.maxX = 0;
+            this._bounds.minX = this._bounds.maxX = (leftOuter + rightOuter) / 2;
         }
         if (this._bounds.minY > this._bounds.maxY) {
-            this._bounds.minY = this._bounds.maxY = 0;
+            this._bounds.minY = this._bounds.maxY = (bottomOuter + topOuter) / 2;
         }
-    }
-
-    private _snapToTarget() {
-        if (!this.target) return;
-
-        const targetPos = this.target.position;
-        _tempVec3.set(
-            math.clamp(targetPos.x, this._bounds.minX, this._bounds.maxX),
-            math.clamp(targetPos.y, this._bounds.minY, this._bounds.maxY),
-            this.node.position.z,
-        );
-        this.node.setPosition(_tempVec3);
     }
 }

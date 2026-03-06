@@ -8,6 +8,8 @@ import { BossMovement } from '../boss/boss-movement';
 import { BossShooting } from '../boss/boss-shooting';
 import { BossBullet } from '../boss/boss-bullet';
 import { PlayerBullet } from '../player/player-bullet';
+import { GameOverPopup } from '../ui/game-over-popup';
+import { VictoryPopup } from '../ui/victory-popup';
 
 const { ccclass, property } = _decorator;
 
@@ -26,6 +28,12 @@ export class CombatManager extends Component {
 
     @property(Node)
     playerHealthBarNode: Node = null!;
+
+    @property(Node)
+    gameOverPopupNode: Node = null!;
+
+    @property(Node)
+    victoryPopupNode: Node = null!;
 
     start() {
         CombatManager.gameOver = false;
@@ -57,11 +65,12 @@ export class CombatManager extends Component {
             playerHealthBar.updateHealth(current, max);
         });
 
-        // Boss death
+        // Boss death → Victory
         bossHealth.onDeath(() => {
             CombatManager.gameOver = true;
             this.bossNode.active = false;
             this._destroyAllBullets();
+            this.victoryPopupNode.getComponent(VictoryPopup)?.show();
         });
 
         // Player death
@@ -69,7 +78,12 @@ export class CombatManager extends Component {
             CombatManager.gameOver = true;
             this.playerNode.active = false;
             this._destroyAllBullets();
+            this._showGameOver();
         });
+    }
+
+    private _showGameOver() {
+        this.gameOverPopupNode.getComponent(GameOverPopup)?.show();
     }
 
     private _destroyAllBullets() {
